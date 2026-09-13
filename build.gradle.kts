@@ -1,9 +1,13 @@
 plugins {
-    id("java")
+    id("application")
 }
 
 group = "ru.expram.orchestra"
 version = "0.0.1-Beta"
+
+application {
+    mainClass = "${project.group}.Orchestra"
+}
 
 repositories {
     mavenCentral()
@@ -17,7 +21,8 @@ dependencies {
     implementation("com.google.dagger:dagger:2.60.1")
     annotationProcessor("com.google.dagger:dagger-compiler:2.60.1")
     // Libs
-
+    implementation("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
     // Tests
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
