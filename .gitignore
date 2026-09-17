@@ -1,0 +1,33 @@
+# JetBrains / GoLand
+.idea/
+*.iml
+
+# Go binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Tests / coverage
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Build output
+/bin/
+/dist/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
