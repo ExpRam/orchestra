@@ -1,9 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"os"
+
+	"github.com/expram/orchestra/internal/cli"
 )
 
 func main() {
-	fmt.Print("Orchestra")
+	os.Exit(cli.Execute())
 }
