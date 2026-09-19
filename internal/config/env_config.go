@@ -5,10 +5,12 @@ import (
 	"strings"
 )
 
-type Env struct{}
+type Env struct {
+	prefix string
+}
 
-func NewEnv() *Env {
-	return &Env{}
+func NewEnv(prefix string) *Env {
+	return &Env{prefix: prefix}
 }
 
 func (s *Env) Load() (Values, error) {
@@ -20,7 +22,10 @@ func (s *Env) Load() (Values, error) {
 			continue
 		}
 
-		env[key] = value
+		name, found := strings.CutPrefix(key, s.prefix)
+		if found && name != "" {
+			env[name] = value
+		}
 	}
 
 	return env, nil

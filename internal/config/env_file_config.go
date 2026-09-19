@@ -1,6 +1,9 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"maps"
 
 	"github.com/joho/godotenv"
@@ -16,8 +19,13 @@ func NewEnvFile(path string) *EnvFile {
 
 func (s *EnvFile) Load() (Values, error) {
 	env, err := godotenv.Read(s.path)
+
+	if errors.Is(err, fs.ErrNotExist) {
+		return Values{}, nil
+	}
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot read: %w", err)
 	}
 
 	values := make(Values, len(env))
