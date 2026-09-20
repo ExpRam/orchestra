@@ -1,11 +1,11 @@
-package config
+package source
 
 import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"maps"
 
+	"github.com/expram/orchestra/internal/config"
 	"github.com/joho/godotenv"
 )
 
@@ -13,24 +13,22 @@ type EnvFile struct {
 	path string
 }
 
+var _ config.Source = (*EnvFile)(nil)
+
 func NewEnvFile(path string) *EnvFile {
 	return &EnvFile{path: path}
 }
 
-func (s *EnvFile) Load() (Values, error) {
+func (s *EnvFile) Load() (config.Values, error) {
 	env, err := godotenv.Read(s.path)
 
 	if errors.Is(err, fs.ErrNotExist) {
-		return Values{}, nil
+		return config.Values{}, nil
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot read: %w", err)
+		return nil, fmt.Errorf("read: %w", err)
 	}
 
-	values := make(Values, len(env))
-
-	maps.Copy(values, env)
-
-	return values, nil
+	return env, nil
 }

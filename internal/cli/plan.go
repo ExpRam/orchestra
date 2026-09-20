@@ -10,6 +10,8 @@ type planCommand struct {
 	destroy bool
 }
 
+var _ InfrastructureCommand = (*planCommand)(nil)
+
 func (c *planCommand) Operation() operation.InfrastructureOperation {
 	opType := operation.TypeProvision
 
@@ -23,7 +25,7 @@ func (c *planCommand) Operation() operation.InfrastructureOperation {
 	}
 }
 
-func newPlanCommand() *cobra.Command {
+func NewPlanCommand() *cobra.Command {
 	c := &planCommand{}
 
 	cmd := newInfrastructureCommand(
@@ -43,8 +45,4 @@ func newPlanCommand() *cobra.Command {
 	)
 
 	return cmd
-}
-
-func init() {
-	rootCmd.AddCommand(newPlanCommand())
 }
