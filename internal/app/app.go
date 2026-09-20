@@ -9,6 +9,7 @@ import (
 	"github.com/expram/orchestra/internal/cli"
 	"github.com/expram/orchestra/internal/config"
 	"github.com/expram/orchestra/internal/config/source"
+	"github.com/expram/orchestra/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +29,8 @@ type App struct {
 
 type runtime struct {
 	cfg config.Config
+
+	prepareWorkspace workspace.PrepareWorkspaceUseCase
 }
 
 func New() *App {
@@ -96,7 +99,8 @@ func (a *App) loadConfig() (config.Config, error) {
 }
 
 func newRuntime(cfg config.Config) *runtime {
-	return &runtime{cfg: cfg}
+	prepareWorkspace := workspace.NewPrepareWorkspaceUseCase()
+	return &runtime{cfg: cfg, prepareWorkspace: prepareWorkspace}
 }
 
 func logLevelFor(cfg config.Config) slog.Level {
