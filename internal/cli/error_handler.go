@@ -11,7 +11,7 @@ type exitCoder interface {
 	ExitCode() int
 }
 
-func handleExecutionError(cmd *cobra.Command, err error) int {
+func HandleExecutionError(cmd *cobra.Command, err error) int {
 	slog.Error(
 		"command execution failed",
 		"command", cmd.CommandPath(),

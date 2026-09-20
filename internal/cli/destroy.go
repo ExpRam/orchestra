@@ -9,7 +9,7 @@ type destroyCommand struct {
 	baseInfrastructureCommand
 }
 
-var _ destroyCommand = destroyCommand{}
+var _ InfrastructureCommand = destroyCommand{}
 
 func (destroyCommand) Operation() operation.InfrastructureOperation {
 	return operation.InfrastructureOperation{
@@ -18,7 +18,7 @@ func (destroyCommand) Operation() operation.InfrastructureOperation {
 	}
 }
 
-func newDestroyCommand() *cobra.Command {
+func NewDestroyCommand() *cobra.Command {
 	c := &destroyCommand{}
 
 	return newInfrastructureCommand(
@@ -26,12 +26,7 @@ func newDestroyCommand() *cobra.Command {
 		"Destroy infrastructure",
 		&c.baseInfrastructureCommand,
 		func() error {
-			// usecase.Execute(c)
 			return nil
 		},
 	)
-}
-
-func init() {
-	rootCmd.AddCommand(newDestroyCommand())
 }

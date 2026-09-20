@@ -1,21 +1,23 @@
 package cli
 
 import (
+	"github.com/expram/orchestra/internal/config"
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:           "orchestra",
-	Short:         "Orchestrator for GitOps. Describe anything with k8s-like manifests",
-	SilenceUsage:  true,
-	SilenceErrors: true,
-}
-
-func Execute() int {
-	cmd, err := rootCmd.ExecuteC()
-	if err != nil {
-		return handleExecutionError(cmd, err)
+func NewRootCmd() *cobra.Command {
+	root := &cobra.Command{
+		Use:           "orchestra",
+		Short:         "Orchestrator for GitOps. Describe anything with k8s-like manifests",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
-	return 0
+	root.PersistentFlags().Bool(
+		config.KeyDebug,
+		false,
+		"enable debug mode",
+	)
+
+	return root
 }

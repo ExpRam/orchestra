@@ -9,7 +9,7 @@ type applyCommand struct {
 	baseInfrastructureCommand
 }
 
-var _ applyCommand = applyCommand{}
+var _ InfrastructureCommand = applyCommand{}
 
 func (applyCommand) Operation() operation.InfrastructureOperation {
 	return operation.InfrastructureOperation{
@@ -18,7 +18,7 @@ func (applyCommand) Operation() operation.InfrastructureOperation {
 	}
 }
 
-func newApplyCommand() *cobra.Command {
+func NewApplyCommand() *cobra.Command {
 	c := &applyCommand{}
 
 	return newInfrastructureCommand(
@@ -26,12 +26,7 @@ func newApplyCommand() *cobra.Command {
 		"Apply infrastructure",
 		&c.baseInfrastructureCommand,
 		func() error {
-			// usecase.Execute(c)
 			return nil
 		},
 	)
-}
-
-func init() {
-	rootCmd.AddCommand(newApplyCommand())
 }
