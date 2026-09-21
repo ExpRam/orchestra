@@ -11,6 +11,7 @@ import (
 	"github.com/expram/orchestra/internal/config/source"
 	"github.com/expram/orchestra/internal/workspace"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -21,10 +22,7 @@ const (
 const exitSuccess = 0
 
 type App struct {
-	root     *cobra.Command
-	loader   *config.Loader
-	logLevel *slog.LevelVar
-	runtime  *runtime
+	root    *cobra.Command
 }
 
 type runtime struct {
@@ -36,21 +34,18 @@ type runtime struct {
 func New() *App {
 	root := cli.NewRootCmd()
 
-	app := &App{
-		root: root,
-		loader: config.NewLoader(
-			source.NewEnvFile(envFilePath),
-			source.NewEnv(envPrefix),
-			source.NewFlag(root.PersistentFlags()),
-		),
-		logLevel: new(slog.LevelVar),
+	logLevel := new(slog.LevelVar)
+	slog.SetDefault(newLogger(logLevel))
+
+	cfg, err := loadConfig(root.PersistentFlags())
+	if err != nil {
+		slog.Warn("load configuration, falling back to defaults", "error", err)
 	}
 
-	slog.SetDefault(newLogger(app.logLevel))
+	logLevel.Set(logLevelFor(cfg))
+	slog.Debug("debug mode enabled")
 
-	root.PersistentPreRunE = func(*cobra.Command, []string) error {
-		return app.initialize()
-	}
+	// runtime := newRuntime(cfg)
 
 	root.AddCommand(
 		cli.NewPlanCommand(),
@@ -58,7 +53,9 @@ func New() *App {
 		cli.NewDestroyCommand(),
 	)
 
-	return app
+	return &App{
+		root:    root,
+	}
 }
 
 func (a *App) Run(ctx context.Context) int {
@@ -70,22 +67,14 @@ func (a *App) Run(ctx context.Context) int {
 	return exitSuccess
 }
 
-func (a *App) initialize() error {
-	cfg, err := a.loadConfig()
-	if err != nil {
-		return err
-	}
+func loadConfig(flags *pflag.FlagSet) (config.Config, error) {
+	loader := config.NewLoader(
+		source.NewEnvFile(envFilePath),
+		source.NewEnv(envPrefix),
+		source.NewFlag(flags, os.Args[1:]),
+	)
 
-	a.logLevel.Set(logLevelFor(cfg))
-	slog.Debug("debug mode enabled")
-
-	a.runtime = newRuntime(cfg)
-
-	return nil
-}
-
-func (a *App) loadConfig() (config.Config, error) {
-	values, err := a.loader.Load()
+	values, err := loader.Load()
 	if err != nil {
 		return config.Config{}, fmt.Errorf("load configuration: %w", err)
 	}
