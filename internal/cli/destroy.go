@@ -18,15 +18,14 @@ func (destroyCommand) Operation() operation.InfrastructureOperation {
 	}
 }
 
-func NewDestroyCommand() *cobra.Command {
+func NewDestroyCommand(useCase operation.CallInfrastructureOperationUseCase) *cobra.Command {
 	c := &destroyCommand{}
 
 	return newInfrastructureCommand(
-		"destroy <directories...>",
+		"destroy <builtin-directory> [user-manifests-directory]",
 		"Destroy infrastructure",
 		&c.baseInfrastructureCommand,
-		func() error {
-			return nil
-		},
+		c,
+		useCase,
 	)
 }

@@ -12,7 +12,9 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
+	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/provider"
+	"github.com/expram/orchestra/internal/workspace"
 )
 
 const (
@@ -29,6 +31,7 @@ type App struct {
 }
 
 type Static struct {
+	opUseCase operation.CallInfrastructureOperationUseCase
 }
 
 type Runtime struct {
@@ -63,9 +66,9 @@ func New() *App {
 	runtime := newRuntime(provider.New(func() config.Config { return cfg }))
 
 	root.AddCommand(
-		cli.NewPlanCommand(),
-		cli.NewApplyCommand(),
-		cli.NewDestroyCommand(),
+		cli.NewPlanCommand(static.opUseCase),
+		cli.NewApplyCommand(static.opUseCase),
+		cli.NewDestroyCommand(static.opUseCase),
 	)
 
 	return &App{root: root, runtime: runtime, static: static}
@@ -112,5 +115,11 @@ func newRuntime(cfg provider.Provider[config.Config]) *Runtime {
 }
 
 func newStatic() *Static {
-	return &Static{}
+	wsUseCase := workspace.NewPrepareWorkspaceUseCase()
+
+	opUseCase := operation.NewCallInfrastructureOperationUseCase(
+		wsUseCase,
+	)
+
+	return &Static{opUseCase}
 }

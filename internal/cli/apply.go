@@ -18,15 +18,14 @@ func (applyCommand) Operation() operation.InfrastructureOperation {
 	}
 }
 
-func NewApplyCommand() *cobra.Command {
+func NewApplyCommand(useCase operation.CallInfrastructureOperationUseCase) *cobra.Command {
 	c := &applyCommand{}
 
 	return newInfrastructureCommand(
-		"apply <directories...>",
+		"apply <builtin-directory> [user-manifests-directory]",
 		"Apply infrastructure",
 		&c.baseInfrastructureCommand,
-		func() error {
-			return nil
-		},
+		c,
+		useCase,
 	)
 }

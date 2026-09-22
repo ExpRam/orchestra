@@ -25,16 +25,15 @@ func (c *planCommand) Operation() operation.InfrastructureOperation {
 	}
 }
 
-func NewPlanCommand() *cobra.Command {
+func NewPlanCommand(useCase operation.CallInfrastructureOperationUseCase) *cobra.Command {
 	c := &planCommand{}
 
 	cmd := newInfrastructureCommand(
-		"plan <directories...>",
+		"plan <builtin-directory> [user-manifests-directory]",
 		"Show planned infrastructure changes",
 		&c.baseInfrastructureCommand,
-		func() error {
-			return nil
-		},
+		c,
+		useCase,
 	)
 
 	cmd.Flags().BoolVar(
