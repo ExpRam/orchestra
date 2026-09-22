@@ -10,23 +10,25 @@ type InfrastructureCommand interface {
 }
 
 type baseInfrastructureCommand struct {
-	builtInDirectories []string
-	filterTokens       []string
+	builtinDirectory string
+	userDirectory    string
+	filterTokens     []string
 }
 
 func newInfrastructureCommand(
 	use string,
 	short string,
 	c *baseInfrastructureCommand,
-	run func() error,
+	infraCmd InfrastructureCommand,
+	useCase operation.CallInfrastructureOperationUseCase,
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   use,
 		Short: short,
-		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c.builtInDirectories = args
-			return run()
+			c.bindArgs(args)
+
+			return useCase.Process(infraCmd.Operation(), c.workspaceSettings())
 		},
 	}
 
@@ -36,7 +38,7 @@ func newInfrastructureCommand(
 }
 
 func (c *baseInfrastructureCommand) configure(cmd *cobra.Command) {
-	cmd.Args = cobra.MinimumNArgs(1)
+	cmd.Args = cobra.RangeArgs(1, 2)
 
 	cmd.Flags().StringSliceVarP(
 		&c.filterTokens,
@@ -48,5 +50,13 @@ func (c *baseInfrastructureCommand) configure(cmd *cobra.Command) {
 }
 
 func (c *baseInfrastructureCommand) bindArgs(args []string) {
-	c.builtInDirectories = args
+	c.builtinDirectory = args[0]
+
+	if len(args) > 1 {
+		c.userDirectory = args[1]
+	}
+}
+
+func (c *baseInfrastructureCommand) workspaceSettings() operation.WorkspaceSettings {
+	return operation.NewWorkspaceSettings(c.builtinDirectory, c.userDirectory)
 }
