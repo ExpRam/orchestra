@@ -1,37 +1,35 @@
-package workspace
+package filesystem
 
 import (
 	"errors"
 	"fmt"
+
+	"github.com/expram/orchestra/internal/workspace"
 )
 
-type PrepareWorkspaceUseCase interface {
-	Prepare(builtin, user string) (Workspace, error)
+type FileSystemPreparer struct{}
+
+func NewFileSystemPreparer() FileSystemPreparer {
+	return FileSystemPreparer{}
 }
 
-type prepareWorkspaceUseCase struct{}
-
-func NewPrepareWorkspaceUseCase() PrepareWorkspaceUseCase {
-	return prepareWorkspaceUseCase{}
-}
-
-func (p prepareWorkspaceUseCase) Prepare(builtin, user string) (Workspace, error) {
+func (p FileSystemPreparer) Prepare(builtin, user string) (workspace.Workspace, error) {
 	w, err := NewFileSystemWorkspace(true)
 	if err != nil {
 		return nil, fmt.Errorf("prepare workspace: %w", err)
 	}
 
-	if err := p.populate(w, BUILTIN, builtin); err != nil {
+	if err := p.populate(w, workspace.BUILTIN, builtin); err != nil {
 		return nil, closeAndWrap(w, err)
 	}
-	if err := p.populate(w, USER, user); err != nil {
+	if err := p.populate(w, workspace.USER, user); err != nil {
 		return nil, closeAndWrap(w, err)
 	}
 
 	return w, nil
 }
 
-func (p prepareWorkspaceUseCase) populate(w Workspace, dir Directory, src string) error {
+func (p FileSystemPreparer) populate(w workspace.Workspace, dir workspace.Directory, src string) error {
 	if err := w.Mkdir(dir); err != nil {
 		return fmt.Errorf("create %s directory: %w", dir, err)
 	}

@@ -12,9 +12,12 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
+	"github.com/expram/orchestra/internal/manifest/collector"
+	"github.com/expram/orchestra/internal/manifest/reader"
+	"github.com/expram/orchestra/internal/manifest/yaml"
 	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/provider"
-	"github.com/expram/orchestra/internal/workspace"
+	"github.com/expram/orchestra/internal/workspace/filesystem"
 )
 
 const (
@@ -27,7 +30,7 @@ const exitSuccess = 0
 type App struct {
 	root    *cobra.Command
 	runtime *Runtime
-	static *Static
+	static  *Static
 }
 
 type Static struct {
@@ -115,10 +118,10 @@ func newRuntime(cfg provider.Provider[config.Config]) *Runtime {
 }
 
 func newStatic() *Static {
-	wsUseCase := workspace.NewPrepareWorkspaceUseCase()
-
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
-		wsUseCase,
+		filesystem.NewFileSystemPreparer(),
+		collector.NewCollector(),
+		reader.New(yaml.NewYamlUnresolvedManifestParser(yaml.NewYamlUnresolvedManifestValidator())),
 	)
 
 	return &Static{opUseCase}
