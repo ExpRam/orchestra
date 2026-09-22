@@ -52,6 +52,12 @@ type UnresolvedManifest struct {
 	Spec       Spec
 }
 
+func (m UnresolvedManifest) WithSource(source Source) UnresolvedManifest {
+	m.Source = source
+
+	return m
+}
+
 func NewUnresolvedManifest(
 	source Source,
 	kind, apiVersion string,

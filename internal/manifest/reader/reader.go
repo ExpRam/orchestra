@@ -24,12 +24,14 @@ func (r Reader) Read(ws workspace.Workspace, files []string) ([]manifest.Unresol
 			return nil, fmt.Errorf("read %q: %w", file, err)
 		}
 
-		parsed, err := r.parser.Parse(file, data)
+		parsed, err := r.parser.Parse(data)
 		if err != nil {
-			return nil, err
+			return nil, Error{File: file, Err: err}
 		}
 
-		manifests = append(manifests, parsed...)
+		for _, unresolved := range parsed {
+			manifests = append(manifests, unresolved.WithSource(newSource(file, unresolved.Source)))
+		}
 	}
 
 	return manifests, nil

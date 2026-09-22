@@ -24,16 +24,16 @@ func NewYamlUnresolvedManifestParser(validator UnresolvedManifestValidator) Yaml
 	return YamlUnresolvedManifestParser{validator: validator}
 }
 
-func (p YamlUnresolvedManifestParser) Parse(name string, data []byte) ([]manifest.UnresolvedManifest, error) {
+func (p YamlUnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedManifest, error) {
 	documents, err := yamldoc.Split(data)
 	if err != nil {
-		return nil, validation.Failed(yamldoc.Errors(err)...).Err(stream(name))
+		return nil, validation.Failed(yamldoc.Errors(err)...).Err(nil)
 	}
 
 	manifests := make([]manifest.UnresolvedManifest, 0, len(documents))
 
 	for _, doc := range documents {
-		unresolved, err := p.parse(name, doc)
+		unresolved, err := p.parse(doc)
 		if err != nil {
 			return nil, err
 		}
@@ -44,8 +44,8 @@ func (p YamlUnresolvedManifestParser) Parse(name string, data []byte) ([]manifes
 	return manifests, nil
 }
 
-func (p YamlUnresolvedManifestParser) parse(name string, doc yamldoc.Document) (manifest.UnresolvedManifest, error) {
-	source := newSource(name, doc.Index, doc.Line)
+func (p YamlUnresolvedManifestParser) parse(doc yamldoc.Document) (manifest.UnresolvedManifest, error) {
+	source := newSource(doc.Index, doc.Line)
 
 	if !doc.Mapping() {
 		return manifest.UnresolvedManifest{}, validation.Failed(errNotAnObject).Err(source)
