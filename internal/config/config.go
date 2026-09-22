@@ -1,9 +1,13 @@
 package config
 
-const (
-	KeyDebug = "debug"
-)
+const Delim = "."
+
+const PathDebug = "debug"
 
 type Config struct {
-	Debug bool
+	Debug bool `config:"debug"`
+}
+
+func Defaults() Config {
+	return Config{Debug: false}
 }

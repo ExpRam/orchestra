@@ -2,16 +2,17 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/expram/orchestra/internal/cli"
 	"github.com/expram/orchestra/internal/config"
-	"github.com/expram/orchestra/internal/config/source"
-	"github.com/expram/orchestra/internal/workspace"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+	"github.com/expram/orchestra/internal/config/loader"
+	"github.com/expram/orchestra/internal/config/source/env"
+	"github.com/expram/orchestra/internal/config/source/flag"
+	"github.com/expram/orchestra/internal/provider"
 )
 
 const (
@@ -23,29 +24,43 @@ const exitSuccess = 0
 
 type App struct {
 	root    *cobra.Command
+	runtime *Runtime
+	static *Static
 }
 
-type runtime struct {
-	cfg config.Config
+type Static struct {
+}
 
-	prepareWorkspace workspace.PrepareWorkspaceUseCase
+type Runtime struct {
+	cfg provider.Provider[config.Config]
 }
 
 func New() *App {
-	root := cli.NewRootCmd()
-
 	logLevel := new(slog.LevelVar)
 	slog.SetDefault(newLogger(logLevel))
 
-	cfg, err := loadConfig(root.PersistentFlags())
-	if err != nil {
-		slog.Warn("load configuration, falling back to defaults", "error", err)
+	static := newStatic()
+
+	cfg := config.Defaults()
+	root := cli.NewRootCmd(cfg)
+
+	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
+		loaded, err := loadConfig(cmd)
+		if err != nil {
+			slog.Warn("load configuration, falling back to defaults", "error", err)
+
+			loaded = config.Defaults()
+		}
+
+		cfg = loaded
+
+		logLevel.Set(logLevelFor(cfg))
+		slog.Debug("debug mode enabled")
+
+		return nil
 	}
 
-	logLevel.Set(logLevelFor(cfg))
-	slog.Debug("debug mode enabled")
-
-	// runtime := newRuntime(cfg)
+	runtime := newRuntime(provider.New(func() config.Config { return cfg }))
 
 	root.AddCommand(
 		cli.NewPlanCommand(),
@@ -53,9 +68,7 @@ func New() *App {
 		cli.NewDestroyCommand(),
 	)
 
-	return &App{
-		root:    root,
-	}
+	return &App{root: root, runtime: runtime, static: static}
 }
 
 func (a *App) Run(ctx context.Context) int {
@@ -67,29 +80,12 @@ func (a *App) Run(ctx context.Context) int {
 	return exitSuccess
 }
 
-func loadConfig(flags *pflag.FlagSet) (config.Config, error) {
-	loader := config.NewLoader(
-		source.NewEnvFile(envFilePath),
-		source.NewEnv(envPrefix),
-		source.NewFlag(flags, os.Args[1:]),
-	)
-
-	values, err := loader.Load()
-	if err != nil {
-		return config.Config{}, fmt.Errorf("load configuration: %w", err)
-	}
-
-	cfg, err := config.ToConfig(values)
-	if err != nil {
-		return config.Config{}, fmt.Errorf("decode configuration: %w", err)
-	}
-
-	return cfg, nil
-}
-
-func newRuntime(cfg config.Config) *runtime {
-	prepareWorkspace := workspace.NewPrepareWorkspaceUseCase()
-	return &runtime{cfg: cfg, prepareWorkspace: prepareWorkspace}
+func loadConfig(cmd *cobra.Command) (config.Config, error) {
+	return loader.New(
+		env.NewFile(envFilePath, envPrefix),
+		env.NewOS(envPrefix),
+		flag.New(cmd.Flags()),
+	).Load()
 }
 
 func logLevelFor(cfg config.Config) slog.Level {
@@ -109,4 +105,12 @@ func newLogger(level slog.Leveler) *slog.Logger {
 			},
 		),
 	)
+}
+
+func newRuntime(cfg provider.Provider[config.Config]) *Runtime {
+	return &Runtime{cfg: cfg}
+}
+
+func newStatic() *Static {
+	return &Static{}
 }
