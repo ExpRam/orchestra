@@ -1,11 +1,13 @@
 package cli
 
 import (
-	"github.com/expram/orchestra/internal/config"
 	"github.com/spf13/cobra"
+
+	"github.com/expram/orchestra/internal/config"
+	"github.com/expram/orchestra/internal/config/source/flag"
 )
 
-func NewRootCmd() *cobra.Command {
+func NewRootCmd(defaults config.Config) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "orchestra",
 		Short:         "Orchestrator for GitOps. Describe anything with k8s-like manifests",
@@ -14,8 +16,8 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	root.PersistentFlags().Bool(
-		config.KeyDebug,
-		false,
+		flag.Name(config.PathDebug),
+		defaults.Debug,
 		"enable debug mode",
 	)
 
