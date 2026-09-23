@@ -4,11 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/expram/orchestra/internal/errscope"
 )
 
 var (
 	ErrEmptyKind       = errors.New("kind must not be empty")
 	ErrEmptyAPIVersion = errors.New("api version must not be empty")
+	ErrEmptyName       = errors.New("name must not be empty")
+	ErrMissingSpec     = errors.New("spec must be specified")
 )
 
 type Kind string
@@ -44,46 +48,56 @@ func (v APIVersion) String() string {
 	return string(v)
 }
 
+type Name string
+
+func NewName(value string) (Name, error) {
+	if strings.TrimSpace(value) == "" {
+		return "", ErrEmptyName
+	}
+
+	return Name(value), nil
+}
+
+func (n Name) String() string {
+	return string(n)
+}
+
 type UnresolvedManifest struct {
-	Source     Source
 	Kind       Kind
 	APIVersion APIVersion
+	Name       Name
 	Metadata   Metadata
 	Spec       Spec
 }
 
-func (m UnresolvedManifest) WithSource(source Source) UnresolvedManifest {
-	m.Source = source
-
-	return m
-}
-
 func NewUnresolvedManifest(
-	source Source,
-	kind, apiVersion string,
+	kind, apiVersion, name string,
 	metadata Metadata,
 	spec Spec,
 ) (UnresolvedManifest, error) {
-	var problems []error
+	var problems errscope.Problems
 
 	manifestKind, err := NewKind(kind)
-	if err != nil {
-		problems = append(problems, err)
-	}
+	problems.Add(err)
 
 	manifestAPIVersion, err := NewAPIVersion(apiVersion)
-	if err != nil {
-		problems = append(problems, err)
+	problems.Add(err)
+
+	manifestName, err := NewName(name)
+	problems.Add(err)
+
+	if spec == nil {
+		problems.Add(ErrMissingSpec)
 	}
 
 	if len(problems) > 0 {
-		return UnresolvedManifest{}, Error{Source: source, Problems: problems}
+		return UnresolvedManifest{}, Error{Problems: problems}
 	}
 
 	return UnresolvedManifest{
-		Source:     source,
 		Kind:       manifestKind,
 		APIVersion: manifestAPIVersion,
+		Name:       manifestName,
 		Metadata:   metadata,
 		Spec:       spec,
 	}, nil

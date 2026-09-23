@@ -13,6 +13,7 @@ type baseInfrastructureCommand struct {
 	builtinDirectory string
 	userDirectory    string
 	filterTokens     []string
+	keepWorkspace    bool
 }
 
 func newInfrastructureCommand(
@@ -47,6 +48,13 @@ func (c *baseInfrastructureCommand) configure(cmd *cobra.Command) {
 		nil,
 		"Filter user manifests by metadata values",
 	)
+
+	cmd.Flags().BoolVar(
+		&c.keepWorkspace,
+		"keep-workspace",
+		false,
+		"Keep the workspace directory after the command finishes",
+	)
 }
 
 func (c *baseInfrastructureCommand) bindArgs(args []string) {
@@ -58,5 +66,5 @@ func (c *baseInfrastructureCommand) bindArgs(args []string) {
 }
 
 func (c *baseInfrastructureCommand) workspaceSettings() operation.WorkspaceSettings {
-	return operation.NewWorkspaceSettings(c.builtinDirectory, c.userDirectory)
+	return operation.NewWorkspaceSettings(c.builtinDirectory, c.userDirectory, c.keepWorkspace)
 }

@@ -3,8 +3,9 @@ package workspace
 type Directory = string
 
 const (
-	BUILTIN Directory = "builtin"
-	USER    Directory = "user"
+	BUILTIN  Directory = "builtin"
+	USER     Directory = "user"
+	RENDERED Directory = "rendered"
 )
 
 type Workspace interface {
@@ -17,4 +18,6 @@ type Workspace interface {
 	Remove(path string) error
 
 	Copy(src, dst string) error
+
+	Close() error
 }

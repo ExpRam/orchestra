@@ -1,4 +1,4 @@
-package validation
+package renderer
 
 import "github.com/expram/orchestra/internal/errscope"
 

@@ -17,5 +17,5 @@ func run() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	return app.New().Run(ctx)
+	return app.NewApp().Run(ctx)
 }

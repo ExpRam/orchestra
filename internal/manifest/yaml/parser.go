@@ -1,70 +1,62 @@
 package yaml
 
 import (
+	"github.com/expram/orchestra/internal/contract"
+	"github.com/expram/orchestra/internal/errscope"
 	"github.com/expram/orchestra/internal/manifest"
+	"github.com/expram/orchestra/internal/manifest/dto"
 	"github.com/expram/orchestra/internal/validation"
 	yamldoc "github.com/expram/orchestra/internal/yaml"
 )
 
-type document struct {
-	APIVersion string         `yaml:"apiVersion"`
-	Kind       string         `yaml:"kind"`
-	Metadata   map[string]any `yaml:"metadata"`
-	Spec       map[string]any `yaml:"spec"`
-	Unknown    map[string]any `yaml:",inline"`
-}
-
 type YamlUnresolvedManifestParser struct {
-	validator UnresolvedManifestValidator
+	validator dto.UnresolvedManifestValidator
 }
 
-var _ UnresolvedManifestParser = YamlUnresolvedManifestParser{}
+var _ contract.Parser[manifest.UnresolvedManifest] = YamlUnresolvedManifestParser{}
 
-func NewYamlUnresolvedManifestParser(validator UnresolvedManifestValidator) YamlUnresolvedManifestParser {
+func NewYamlUnresolvedManifestParser(validator dto.UnresolvedManifestValidator) YamlUnresolvedManifestParser {
 	return YamlUnresolvedManifestParser{validator: validator}
 }
 
 func (p YamlUnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedManifest, error) {
 	documents, err := yamldoc.Split(data)
 	if err != nil {
-		return nil, validation.Failed(yamldoc.Errors(err)...).Err(nil)
+		return nil, validation.Error{Problems: []error{err}}
 	}
+
+	var problems errscope.Problems
 
 	manifests := make([]manifest.UnresolvedManifest, 0, len(documents))
 
 	for _, doc := range documents {
 		unresolved, err := p.parse(doc)
 		if err != nil {
-			return nil, err
+			problems.Add(errscope.In(doc.Location(), err))
+
+			continue
 		}
 
 		manifests = append(manifests, unresolved)
+	}
+
+	if err := problems.Err(); err != nil {
+		return nil, err
 	}
 
 	return manifests, nil
 }
 
 func (p YamlUnresolvedManifestParser) parse(doc yamldoc.Document) (manifest.UnresolvedManifest, error) {
-	source := newSource(doc.Index, doc.Line)
-
-	if !doc.Mapping() {
-		return manifest.UnresolvedManifest{}, validation.Failed(errNotAnObject).Err(source)
+	var tree any
+	if err := doc.Decode(&tree); err != nil {
+		return manifest.UnresolvedManifest{}, validation.Error{Problems: []error{err}}
 	}
 
-	var decoded document
-	if err := doc.Decode(&decoded); err != nil {
-		return manifest.UnresolvedManifest{}, validation.Failed(yamldoc.Errors(err)...).Err(source)
+	valid, err := p.validator.Validate(tree)
+	if err != nil {
+		return manifest.UnresolvedManifest{}, validation.Error{Problems: []error{err}}
 	}
 
-	if result := p.validator.Validate(decoded); !result.Valid() {
-		return manifest.UnresolvedManifest{}, result.Err(source)
-	}
-
-	return manifest.NewUnresolvedManifest(
-		source,
-		decoded.Kind,
-		decoded.APIVersion,
-		decoded.Metadata,
-		decoded.Spec,
-	)
+	return manifest.NewUnresolvedManifest(valid.Kind, valid.APIVersion, valid.Name, valid.Metadata, valid.Spec)
 }

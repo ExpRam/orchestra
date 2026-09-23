@@ -1,7 +1,6 @@
 package collector
 
 import (
-	"fmt"
 	"path"
 	"slices"
 	"strings"
@@ -31,7 +30,7 @@ func (c Collector) Collect(ws workspace.Workspace, directory string) ([]string, 
 	}
 
 	if err := ws.Walk(directory, collect); err != nil {
-		return nil, fmt.Errorf("collect manifest files: %w", err)
+		return nil, err
 	}
 
 	return files, nil

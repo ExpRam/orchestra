@@ -3,7 +3,6 @@ package yaml
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 
 	yamlv3 "go.yaml.in/yaml/v3"
@@ -18,12 +17,16 @@ type Document struct {
 	node *yamlv3.Node
 }
 
-func (d Document) Mapping() bool {
-	return d.node.Kind == yamlv3.MappingNode
+func (d Document) Location() string {
+	return location(d.Line, d.Index)
 }
 
 func (d Document) Decode(value any) error {
-	return d.node.Decode(value)
+	if err := d.node.Decode(value); err != nil {
+		return translate(err, d.Index)
+	}
+
+	return nil
 }
 
 func Split(data []byte) ([]Document, error) {
@@ -39,7 +42,7 @@ func Split(data []byte) ([]Document, error) {
 				return documents, nil
 			}
 
-			return nil, fmt.Errorf("document %d: %w", index, err)
+			return nil, translate(err, index)
 		}
 
 		content := content(&node)
@@ -49,20 +52,6 @@ func Split(data []byte) ([]Document, error) {
 
 		documents = append(documents, Document{Index: index, Line: content.Line, node: content})
 	}
-}
-
-func Errors(err error) []error {
-	var typeError *yamlv3.TypeError
-	if !errors.As(err, &typeError) {
-		return []error{err}
-	}
-
-	problems := make([]error, 0, len(typeError.Errors))
-	for _, message := range typeError.Errors {
-		problems = append(problems, errors.New(message))
-	}
-
-	return problems
 }
 
 func content(node *yamlv3.Node) *yamlv3.Node {

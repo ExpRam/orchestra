@@ -10,17 +10,17 @@ type OS struct {
 	env
 }
 
-var _ config.Source = (*OS)(nil)
+var _ config.Source = OS{}
 
-func NewOS(prefix string) *OS {
-	return &OS{env{prefix: prefix}}
+func NewOS(prefix string) OS {
+	return OS{env{prefix: prefix}}
 }
 
-func (s *OS) Name() string {
+func (s OS) Name() string {
 	return "env"
 }
 
-func (s *OS) Read() (map[string]any, error) {
+func (s OS) Read() (map[string]any, error) {
 	return kenv.Provider(config.Delim, kenv.Opt{
 		Prefix: s.prefix,
 		TransformFunc: func(name, value string) (string, any) {
