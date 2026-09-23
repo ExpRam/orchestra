@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -29,8 +28,6 @@ var keys = manifestKeys{
 
 var knownKeys = []string{keys.Kind, keys.APIVersion, keys.Metadata, keys.Spec}
 
-var errNotAnObject = errors.New("manifest must be an object")
-
 type KRMUnresolvedManifestValidator struct{}
 
 var _ UnresolvedManifestValidator = KRMUnresolvedManifestValidator{}
@@ -39,12 +36,7 @@ func NewKRMUnresolvedManifestValidator() KRMUnresolvedManifestValidator {
 	return KRMUnresolvedManifestValidator{}
 }
 
-func (v KRMUnresolvedManifestValidator) Validate(tree any) (UnresolvedManifest, error) {
-	root, ok := tree.(map[string]any)
-	if !ok {
-		return UnresolvedManifest{}, errNotAnObject
-	}
-
+func (v KRMUnresolvedManifestValidator) Validate(root Tree) (UnresolvedManifest, error) {
 	var problems errscope.Problems
 
 	kind := text(root[keys.Kind], keys.Kind, &problems)

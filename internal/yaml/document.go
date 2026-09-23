@@ -6,27 +6,43 @@ import (
 	"io"
 
 	yamlv3 "go.yaml.in/yaml/v3"
+
+	"github.com/expram/orchestra/internal/errscope"
 )
 
 const nullTag = "!!null"
 
-type Document struct {
-	Index int
-	Line  int
+var (
+	errNotMapping    = errors.New("document must be a mapping")
+	errNonStringKeys = errors.New("mapping keys must be strings")
+)
 
-	node *yamlv3.Node
+type Document struct {
+	index int
+	line  int
+	node  *yamlv3.Node
 }
 
 func (d Document) Location() string {
-	return location(d.Line, d.Index)
+	return location(d.line, d.index)
 }
 
-func (d Document) Decode(value any) error {
-	if err := d.node.Decode(value); err != nil {
-		return translate(err, d.Index)
+func (d Document) Object() (map[string]any, error) {
+	if d.node.Kind != yamlv3.MappingNode {
+		return nil, errscope.In(d.Location(), errNotMapping)
 	}
 
-	return nil
+	var tree any
+	if err := d.node.Decode(&tree); err != nil {
+		return nil, translate(err, d.index, d.Location())
+	}
+
+	object, ok := tree.(map[string]any)
+	if !ok {
+		return nil, errscope.In(d.Location(), errNonStringKeys)
+	}
+
+	return object, nil
 }
 
 func Split(data []byte) ([]Document, error) {
@@ -42,7 +58,7 @@ func Split(data []byte) ([]Document, error) {
 				return documents, nil
 			}
 
-			return nil, translate(err, index)
+			return nil, translate(err, index, "")
 		}
 
 		content := content(&node)
@@ -50,7 +66,7 @@ func Split(data []byte) ([]Document, error) {
 			continue
 		}
 
-		documents = append(documents, Document{Index: index, Line: content.Line, node: content})
+		documents = append(documents, Document{index: index, line: content.Line, node: content})
 	}
 }
 

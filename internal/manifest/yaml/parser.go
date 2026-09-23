@@ -32,7 +32,7 @@ func (p YamlUnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedM
 	for _, doc := range documents {
 		unresolved, err := p.parse(doc)
 		if err != nil {
-			problems.Add(errscope.In(doc.Location(), err))
+			problems.Add(err)
 
 			continue
 		}
@@ -48,15 +48,20 @@ func (p YamlUnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedM
 }
 
 func (p YamlUnresolvedManifestParser) parse(doc yamldoc.Document) (manifest.UnresolvedManifest, error) {
-	var tree any
-	if err := doc.Decode(&tree); err != nil {
-		return manifest.UnresolvedManifest{}, validation.Error{Problems: []error{err}}
-	}
-
-	valid, err := p.validator.Validate(tree)
+	object, err := doc.Object()
 	if err != nil {
 		return manifest.UnresolvedManifest{}, validation.Error{Problems: []error{err}}
 	}
 
-	return manifest.NewUnresolvedManifest(valid.Kind, valid.APIVersion, valid.Name, valid.Metadata, valid.Spec)
+	valid, err := p.validator.Validate(object)
+	if err != nil {
+		return manifest.UnresolvedManifest{}, errscope.In(doc.Location(), validation.Error{Problems: []error{err}})
+	}
+
+	unresolved, err := manifest.NewUnresolvedManifest(valid.Kind, valid.APIVersion, valid.Name, valid.Metadata, valid.Spec)
+	if err != nil {
+		return manifest.UnresolvedManifest{}, errscope.In(doc.Location(), err)
+	}
+
+	return unresolved, nil
 }

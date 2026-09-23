@@ -12,38 +12,59 @@ import (
 	"github.com/expram/orchestra/internal/errscope"
 )
 
-const libraryPrefix = "yaml: "
+const (
+	libraryPrefix       = "yaml: "
+	invalidMapKeyPrefix = "invalid map key:"
+)
 
 var linePattern = regexp.MustCompile(`^line (\d+): (.*)$`)
 
-func translate(err error, index int) error {
+var errInvalidMapKey = errors.New("map keys must be scalars")
+
+func translate(err error, index int, fallback string) error {
 	var typeError *yamlv3.TypeError
 	if !errors.As(err, &typeError) {
-		return problem(err.Error(), index)
+		return problem(err.Error(), index, fallback)
 	}
 
 	var problems errscope.Problems
 	for _, message := range typeError.Errors {
-		problems.Add(problem(message, index))
+		problems.Add(problem(message, index, fallback))
 	}
 
 	return problems.Err()
 }
 
-func problem(message string, index int) error {
+func problem(message string, index int, fallback string) error {
 	message = strings.TrimPrefix(message, libraryPrefix)
 
 	match := linePattern.FindStringSubmatch(message)
 	if match == nil {
-		return errors.New(message)
+		return at(fallback, describe(message))
 	}
 
 	line, err := strconv.Atoi(match[1])
 	if err != nil {
-		return errors.New(message)
+		return at(fallback, describe(message))
 	}
 
-	return errscope.In(location(line, index), errors.New(match[2]))
+	return at(location(line, index), describe(match[2]))
+}
+
+func describe(message string) error {
+	if strings.HasPrefix(message, invalidMapKeyPrefix) {
+		return errInvalidMapKey
+	}
+
+	return errors.New(message)
+}
+
+func at(scope string, cause error) error {
+	if scope == "" {
+		return cause
+	}
+
+	return errscope.In(scope, cause)
 }
 
 func location(line, index int) string {
