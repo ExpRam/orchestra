@@ -7,7 +7,7 @@ import (
 	"github.com/expram/orchestra/internal/config/source/flag"
 )
 
-func NewRootCmd(defaults config.Config) *cobra.Command {
+func NewRootCommand(defaults config.Config) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "orchestra",
 		Short:         "Orchestrator for GitOps. Describe anything with k8s-like manifests",

@@ -15,7 +15,7 @@ func HandleExecutionError(cmd *cobra.Command, err error) int {
 	slog.Error(
 		"command execution failed",
 		"command", cmd.CommandPath(),
-		"error", err,
+		ErrorAttr(err),
 	)
 
 	var coder exitCoder

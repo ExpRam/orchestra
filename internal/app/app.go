@@ -12,9 +12,16 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
+	"github.com/expram/orchestra/internal/manifest/collector"
+	"github.com/expram/orchestra/internal/manifest/dto"
+	"github.com/expram/orchestra/internal/manifest/reader"
+	"github.com/expram/orchestra/internal/manifest/renderer"
+	"github.com/expram/orchestra/internal/manifest/yaml"
 	"github.com/expram/orchestra/internal/operation"
+	"github.com/expram/orchestra/internal/pongo2"
 	"github.com/expram/orchestra/internal/provider"
-	"github.com/expram/orchestra/internal/workspace"
+	"github.com/expram/orchestra/internal/workspace/filesystem"
+	"github.com/expram/orchestra/internal/workspace/preparer"
 )
 
 const (
@@ -26,8 +33,8 @@ const exitSuccess = 0
 
 type App struct {
 	root    *cobra.Command
-	runtime *Runtime
-	static *Static
+	runtime Runtime
+	static  Static
 }
 
 type Static struct {
@@ -38,19 +45,19 @@ type Runtime struct {
 	cfg provider.Provider[config.Config]
 }
 
-func New() *App {
+func NewApp() App {
 	logLevel := new(slog.LevelVar)
 	slog.SetDefault(newLogger(logLevel))
 
 	static := newStatic()
 
 	cfg := config.Defaults()
-	root := cli.NewRootCmd(cfg)
+	root := cli.NewRootCommand(cfg)
 
 	root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
 		loaded, err := loadConfig(cmd)
 		if err != nil {
-			slog.Warn("load configuration, falling back to defaults", "error", err)
+			slog.Warn("load configuration, falling back to defaults", cli.ErrorAttr(err))
 
 			loaded = config.Defaults()
 		}
@@ -63,7 +70,7 @@ func New() *App {
 		return nil
 	}
 
-	runtime := newRuntime(provider.New(func() config.Config { return cfg }))
+	runtime := newRuntime(provider.NewProvider(func() config.Config { return cfg }))
 
 	root.AddCommand(
 		cli.NewPlanCommand(static.opUseCase),
@@ -71,10 +78,10 @@ func New() *App {
 		cli.NewDestroyCommand(static.opUseCase),
 	)
 
-	return &App{root: root, runtime: runtime, static: static}
+	return App{root: root, runtime: runtime, static: static}
 }
 
-func (a *App) Run(ctx context.Context) int {
+func (a App) Run(ctx context.Context) int {
 	cmd, err := a.root.ExecuteContextC(ctx)
 	if err != nil {
 		return cli.HandleExecutionError(cmd, err)
@@ -84,10 +91,10 @@ func (a *App) Run(ctx context.Context) int {
 }
 
 func loadConfig(cmd *cobra.Command) (config.Config, error) {
-	return loader.New(
+	return loader.NewLoader(
 		env.NewFile(envFilePath, envPrefix),
 		env.NewOS(envPrefix),
-		flag.New(cmd.Flags()),
+		flag.NewFlag(cmd.Flags()),
 	).Load()
 }
 
@@ -110,16 +117,17 @@ func newLogger(level slog.Leveler) *slog.Logger {
 	)
 }
 
-func newRuntime(cfg provider.Provider[config.Config]) *Runtime {
-	return &Runtime{cfg: cfg}
+func newRuntime(cfg provider.Provider[config.Config]) Runtime {
+	return Runtime{cfg: cfg}
 }
 
-func newStatic() *Static {
-	wsUseCase := workspace.NewPrepareWorkspaceUseCase()
-
+func newStatic() Static {
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
-		wsUseCase,
+		preparer.NewPreparer(filesystem.NewFileSystemWorkspaceFactory()),
+		collector.NewCollector(),
+		renderer.NewRenderer(pongo2.NewPongo2TemplateRenderer()),
+		reader.NewReader(yaml.NewYamlUnresolvedManifestParser(dto.NewKRMUnresolvedManifestValidator())),
 	)
 
-	return &Static{opUseCase}
+	return Static{opUseCase}
 }

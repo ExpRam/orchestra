@@ -10,6 +10,6 @@ func (f Func[T]) Get() T {
 	return f()
 }
 
-func New[T any](get func() T) Provider[T] {
+func NewProvider[T any](get func() T) Provider[T] {
 	return Func[T](get)
 }

@@ -21,17 +21,17 @@ type Flag struct {
 	flags *pflag.FlagSet
 }
 
-var _ config.Source = (*Flag)(nil)
+var _ config.Source = Flag{}
 
-func New(flags *pflag.FlagSet) *Flag {
-	return &Flag{flags: flags}
+func NewFlag(flags *pflag.FlagSet) Flag {
+	return Flag{flags: flags}
 }
 
-func (s *Flag) Name() string {
+func (s Flag) Name() string {
 	return "flags"
 }
 
-func (s *Flag) Read() (map[string]any, error) {
+func (s Flag) Read() (map[string]any, error) {
 	return posflag.ProviderWithFlag(s.flags, config.Delim, nil, func(flag *pflag.Flag) (string, any) {
 		return Path(flag.Name), posflag.FlagVal(s.flags, flag)
 	}).Read()
