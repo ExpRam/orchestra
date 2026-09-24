@@ -70,6 +70,14 @@ type UnresolvedManifest struct {
 	Spec       Spec
 }
 
+func (m UnresolvedManifest) Type() Type {
+	return Type{Kind: m.Kind, APIVersion: m.APIVersion}
+}
+
+func (m UnresolvedManifest) Identity() Identity {
+	return Identity{Kind: m.Type().Kind, Name: m.Name}
+}
+
 func NewUnresolvedManifest(
 	kind, apiVersion, name string,
 	metadata Metadata,

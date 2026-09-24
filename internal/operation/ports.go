@@ -20,3 +20,7 @@ type ManifestRenderer interface {
 type UnresolvedManifestReader interface {
 	Read(ws workspace.Workspace, files []string) ([]manifest.UnresolvedManifest, error)
 }
+
+type ManifestResolver interface {
+	Resolve(unresolved []manifest.UnresolvedManifest) ([]manifest.Manifest, error)
+}
