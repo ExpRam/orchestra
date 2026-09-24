@@ -14,9 +14,12 @@ import (
 	"github.com/expram/orchestra/internal/config/source/flag"
 	"github.com/expram/orchestra/internal/manifest/collector"
 	"github.com/expram/orchestra/internal/manifest/dto"
+	ordv1 "github.com/expram/orchestra/internal/manifest/kind/ord/v1"
 	"github.com/expram/orchestra/internal/manifest/reader"
+	"github.com/expram/orchestra/internal/manifest/registry"
 	"github.com/expram/orchestra/internal/manifest/renderer"
 	"github.com/expram/orchestra/internal/manifest/yaml"
+	"github.com/expram/orchestra/internal/mapstructure"
 	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/pongo2"
 	"github.com/expram/orchestra/internal/provider"
@@ -127,6 +130,10 @@ func newStatic() Static {
 		collector.NewCollector(),
 		renderer.NewRenderer(pongo2.NewPongo2TemplateRenderer()),
 		reader.NewReader(yaml.NewYamlUnresolvedManifestParser(dto.NewKRMUnresolvedManifestValidator())),
+		registry.NewRegistry(
+			mapstructure.NewMapstructureSpecDecoder(registry.SpecTag),
+			registry.Register[ordv1.Spec](ordv1.Type),
+		),
 	)
 
 	return Static{opUseCase}

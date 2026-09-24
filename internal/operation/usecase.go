@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/expram/orchestra/internal/errscope"
+	"github.com/expram/orchestra/internal/manifest"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
@@ -31,6 +32,7 @@ type callInfrastructureOperationUseCase struct {
 	collector ManifestFileCollector
 	renderer  ManifestRenderer
 	reader    UnresolvedManifestReader
+	resolver  ManifestResolver
 }
 
 func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, wsSettings WorkspaceSettings) (err error) {
@@ -57,7 +59,16 @@ func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, 
 		return errscope.In(fmt.Sprintf("read %s manifests", workspace.BUILTIN), err)
 	}
 
-	_, _ = op, unresolvedManifests
+	manifests, err := c.resolver.Resolve(unresolvedManifests)
+	if err != nil {
+		return errscope.In(fmt.Sprintf("resolve %s manifests", workspace.BUILTIN), err)
+	}
+
+	if err := manifest.EnsureUnique(manifests); err != nil {
+		return errscope.In(fmt.Sprintf("check %s manifests", workspace.BUILTIN), err)
+	}
+
+	_, _ = op, manifests
 
 	return nil
 }
@@ -67,11 +78,13 @@ func NewCallInfrastructureOperationUseCase(
 	collector ManifestFileCollector,
 	renderer ManifestRenderer,
 	reader UnresolvedManifestReader,
+	resolver ManifestResolver,
 ) CallInfrastructureOperationUseCase {
 	return callInfrastructureOperationUseCase{
 		preparer:  preparer,
 		collector: collector,
 		renderer:  renderer,
 		reader:    reader,
+		resolver:  resolver,
 	}
 }

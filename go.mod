@@ -4,6 +4,7 @@ go 1.27
 
 require (
 	github.com/flosch/pongo2/v6 v6.1.0
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/knadh/koanf/parsers/dotenv v1.1.2
 	github.com/knadh/koanf/providers/confmap v1.0.1
 	github.com/knadh/koanf/providers/env/v2 v2.0.1
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect

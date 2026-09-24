@@ -1,0 +1,21 @@
+---
+kind: OrchestraResourceDefinition
+apiVersion: v1
+metadata:
+  name: HelloWorld
+spec:
+  schema:
+    type: object
+    properties:
+      line:
+        type: string
+    required:
+      - line
+  annotations:
+    - name: Print Hello World
+      type: DebugAnnotation
+      settings:
+        print: "{{ input.line }}"
+      execution:
+        cardinality: perManifest
+
