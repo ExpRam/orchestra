@@ -19,6 +19,8 @@ profile.cov
 # Build output
 /bin/
 /dist/
+/main
+/orchestra
 
 # Go workspace
 go.work

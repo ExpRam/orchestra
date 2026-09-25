@@ -1,4 +1,4 @@
-package registry
+package resolver
 
 type Migration interface {
 	Validate() error

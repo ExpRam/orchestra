@@ -28,11 +28,12 @@ type CallInfrastructureOperationUseCase interface {
 }
 
 type callInfrastructureOperationUseCase struct {
-	preparer  WorkspacePreparer
-	collector ManifestFileCollector
-	renderer  ManifestRenderer
-	reader    UnresolvedManifestReader
-	resolver  ManifestResolver
+	preparer   WorkspacePreparer
+	collector  ManifestFileCollector
+	renderer   ManifestRenderer
+	reader     UnresolvedManifestReader
+	resolver   ManifestResolver
+	processors ManifestProcessors
 }
 
 func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, wsSettings WorkspaceSettings) (err error) {
@@ -68,7 +69,9 @@ func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, 
 		return errscope.In(fmt.Sprintf("check %s manifests", workspace.BUILTIN), err)
 	}
 
-	_, _ = op, manifests
+	if err := c.processors.Process(op, manifests, ws); err != nil {
+		return errscope.In(fmt.Sprintf("process %s manifests", workspace.BUILTIN), err)
+	}
 
 	return nil
 }
@@ -79,12 +82,14 @@ func NewCallInfrastructureOperationUseCase(
 	renderer ManifestRenderer,
 	reader UnresolvedManifestReader,
 	resolver ManifestResolver,
+	processors ManifestProcessors,
 ) CallInfrastructureOperationUseCase {
 	return callInfrastructureOperationUseCase{
-		preparer:  preparer,
-		collector: collector,
-		renderer:  renderer,
-		reader:    reader,
-		resolver:  resolver,
+		preparer:   preparer,
+		collector:  collector,
+		renderer:   renderer,
+		reader:     reader,
+		resolver:   resolver,
+		processors: processors,
 	}
 }

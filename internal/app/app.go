@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/expram/orchestra/internal/manifest/processor"
 	"github.com/spf13/cobra"
 
 	"github.com/expram/orchestra/internal/cli"
@@ -12,12 +13,16 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
+	"github.com/expram/orchestra/internal/manifest"
 	"github.com/expram/orchestra/internal/manifest/collector"
 	"github.com/expram/orchestra/internal/manifest/dto"
+	"github.com/expram/orchestra/internal/manifest/kind/ord"
+	ordprocessor "github.com/expram/orchestra/internal/manifest/kind/ord/processor"
 	ordv1 "github.com/expram/orchestra/internal/manifest/kind/ord/v1"
 	"github.com/expram/orchestra/internal/manifest/reader"
 	"github.com/expram/orchestra/internal/manifest/registry"
 	"github.com/expram/orchestra/internal/manifest/renderer"
+	"github.com/expram/orchestra/internal/manifest/resolver"
 	"github.com/expram/orchestra/internal/manifest/yaml"
 	"github.com/expram/orchestra/internal/mapstructure"
 	"github.com/expram/orchestra/internal/operation"
@@ -125,15 +130,37 @@ func newRuntime(cfg provider.Provider[config.Config]) Runtime {
 }
 
 func newStatic() Static {
+	workspaceFactory := filesystem.NewFileSystemWorkspaceFactory()
+	operationPreparer := preparer.NewPreparer(workspaceFactory)
+
+	operationCollector := collector.NewCollector()
+
+	templateRenderer := pongo2.NewPongo2TemplateRenderer()
+	operationRenderer := renderer.NewRenderer(templateRenderer)
+
+	manifestValidator := dto.NewKRMUnresolvedManifestValidator()
+	manifestParser := yaml.NewYamlUnresolvedManifestParser(manifestValidator)
+	operationReader := reader.NewReader(manifestParser)
+
+	specDecoder := mapstructure.NewMapstructureSpecDecoder(resolver.SpecTag)
+	specRegistry := registry.NewRegistry(
+		resolver.RegisterSpec[ordv1.Spec](ordv1.Type),
+	)
+	operationResolver := resolver.NewResolver(specDecoder, specRegistry)
+
+	processorRegistry := registry.NewRegistry(
+		registry.Register[manifest.Kind, operation.ManifestProcessor](ord.Kind, ordprocessor.NewOrdProcessor()),
+	)
+
+	operationProcessor := processor.NewProcessor(processorRegistry)
+
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
-		preparer.NewPreparer(filesystem.NewFileSystemWorkspaceFactory()),
-		collector.NewCollector(),
-		renderer.NewRenderer(pongo2.NewPongo2TemplateRenderer()),
-		reader.NewReader(yaml.NewYamlUnresolvedManifestParser(dto.NewKRMUnresolvedManifestValidator())),
-		registry.NewRegistry(
-			mapstructure.NewMapstructureSpecDecoder(registry.SpecTag),
-			registry.Register[ordv1.Spec](ordv1.Type),
-		),
+		operationPreparer,
+		operationCollector,
+		operationRenderer,
+		operationReader,
+		operationResolver,
+		operationProcessor,
 	)
 
 	return Static{opUseCase}
