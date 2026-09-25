@@ -1,106 +1,36 @@
 package registry
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/expram/orchestra/internal/errscope"
-	"github.com/expram/orchestra/internal/manifest"
-	"github.com/expram/orchestra/internal/validation"
-)
-
-const (
-	SpecTag   = "manifest"
-	specScope = "spec"
-)
-
-type Registration struct {
-	typ     manifest.Type
-	newSpec func() Migration
+type Registration[K comparable, V any] struct {
+	key   K
+	value V
 }
 
-func Register[S any, P interface {
-	*S
-	Migration
-}](typ manifest.Type) Registration {
-	return Registration{
-		typ:     typ,
-		newSpec: func() Migration { return P(new(S)) },
-	}
+func Register[K comparable, V any](key K, value V) Registration[K, V] {
+	return Registration[K, V]{key: key, value: value}
 }
 
-type Registry struct {
-	decoder SpecDecoder
-	specs   map[manifest.Type]func() Migration
+type Registry[K comparable, V any] struct {
+	entries map[K]V
 }
 
-func NewRegistry(decoder SpecDecoder, registrations ...Registration) Registry {
-	specs := make(map[manifest.Type]func() Migration, len(registrations))
+func NewRegistry[K comparable, V any](registrations ...Registration[K, V]) Registry[K, V] {
+	entries := make(map[K]V, len(registrations))
 
 	for _, registration := range registrations {
-		if _, ok := specs[registration.typ]; ok {
-			panic(fmt.Sprintf(
-				"manifest kind %q in api version %q is registered twice",
-				registration.typ.Kind, registration.typ.APIVersion,
-			))
+		if _, ok := entries[registration.key]; ok {
+			panic(fmt.Sprintf("%v is registered twice", registration.key))
 		}
 
-		specs[registration.typ] = registration.newSpec
+		entries[registration.key] = registration.value
 	}
 
-	return Registry{decoder: decoder, specs: specs}
+	return Registry[K, V]{entries: entries}
 }
 
-func (r Registry) Resolve(unresolved []manifest.UnresolvedManifest) ([]manifest.Manifest, error) {
-	var (
-		resolved []manifest.Manifest
-		problems errscope.Problems
-	)
+func (r Registry[K, V]) Lookup(key K) (V, bool) {
+	value, ok := r.entries[key]
 
-	for _, candidate := range unresolved {
-		resolvedManifest, err := r.resolve(candidate)
-		if err != nil {
-			problems.Add(errscope.In(candidate.Identity().String(), err))
-
-			continue
-		}
-
-		resolved = append(resolved, resolvedManifest)
-	}
-
-	if err := problems.Err(); err != nil {
-		return nil, err
-	}
-
-	return resolved, nil
-}
-
-func (r Registry) resolve(candidate manifest.UnresolvedManifest) (manifest.Manifest, error) {
-	newSpec, ok := r.specs[candidate.Type()]
-	if !ok {
-		return manifest.Manifest{}, validation.Error{Problems: []error{fmt.Errorf(
-			"unsupported kind %q in api version %q", candidate.Kind, candidate.APIVersion,
-		)}}
-	}
-
-	spec := newSpec()
-
-	if err := r.decoder.Decode(candidate.Spec, spec); err != nil {
-		return manifest.Manifest{}, errscope.In(specScope, validation.Error{Problems: []error{err}})
-	}
-
-	if err := spec.Validate(); err != nil {
-		return manifest.Manifest{}, errscope.In(specScope, validation.Error{Problems: []error{err}})
-	}
-
-	core, err := spec.Convert()
-	if err != nil {
-		return manifest.Manifest{}, errscope.In(specScope, err)
-	}
-
-	return manifest.Manifest{
-		Type:     candidate.Type(),
-		Name:     candidate.Name,
-		Metadata: candidate.Metadata,
-		Spec:     core,
-	}, nil
+	return value, ok
 }

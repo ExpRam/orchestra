@@ -29,3 +29,5 @@ type Manifest struct {
 func (m Manifest) Identity() Identity {
 	return Identity{Kind: m.Type.Kind, Name: m.Name}
 }
+
+type Catalog []Manifest
