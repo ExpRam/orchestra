@@ -11,10 +11,23 @@ import (
 )
 
 type Processor struct {
-	processors registry.Registry[manifest.Kind, operation.ManifestProcessor]
+	processors registry.Registry[manifest.Kind, TypedProcessor]
 }
 
-func NewProcessor(processors registry.Registry[manifest.Kind, operation.ManifestProcessor]) Processor {
+type TypedProcessor interface {
+	Process(input operation.ProcessInput) error
+}
+
+// typedProcessor Art of Kludge-Oriented Programming.
+type typedProcessor[S any] struct {
+	processor operation.ManifestProcessor[S]
+}
+
+func Register[S any](kind manifest.Kind, processor operation.ManifestProcessor[S]) registry.Registration[manifest.Kind, TypedProcessor] {
+	return registry.Register[manifest.Kind, TypedProcessor](kind, typedProcessor[S]{processor: processor})
+}
+
+func NewProcessor(processors registry.Registry[manifest.Kind, TypedProcessor]) Processor {
 	return Processor{processors: processors}
 }
 
@@ -40,4 +53,15 @@ func (p Processor) process(op operation.InfrastructureOperation, m manifest.Mani
 		Catalog:   catalog,
 		Workspace: ws,
 	})
+}
+
+func (w typedProcessor[S]) Process(input operation.ProcessInput) error {
+	spec, ok := input.Manifest.Spec.(S)
+	if !ok {
+		var excepted S
+
+		return fmt.Errorf("cannot process spec %T, excepted %T", input.Manifest.Spec, excepted)
+	}
+
+	return w.processor.Process(input, spec)
 }

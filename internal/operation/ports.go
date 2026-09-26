@@ -32,8 +32,8 @@ type ProcessInput struct {
 	Workspace workspace.Workspace
 }
 
-type ManifestProcessor interface {
-	Process(input ProcessInput) error
+type ManifestProcessor[S any] interface {
+	Process(input ProcessInput, spec S) error
 }
 
 type ManifestProcessors interface {

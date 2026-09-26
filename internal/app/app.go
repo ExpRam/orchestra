@@ -13,7 +13,6 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
-	"github.com/expram/orchestra/internal/manifest"
 	"github.com/expram/orchestra/internal/manifest/collector"
 	"github.com/expram/orchestra/internal/manifest/dto"
 	"github.com/expram/orchestra/internal/manifest/kind/ord"
@@ -149,7 +148,7 @@ func newStatic() Static {
 	operationResolver := resolver.NewResolver(specDecoder, specRegistry)
 
 	processorRegistry := registry.NewRegistry(
-		registry.Register[manifest.Kind, operation.ManifestProcessor](ord.Kind, ordprocessor.NewOrdProcessor()),
+		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor()),
 	)
 
 	operationProcessor := processor.NewProcessor(processorRegistry)

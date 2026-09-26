@@ -66,7 +66,7 @@ func (r Resolver) resolve(candidate manifest.UnresolvedManifest) (manifest.Manif
 
 	spec := newSpec()
 
-	if err := r.decoder.Decode(candidate.Spec, spec); err != nil {
+	if err := r.decoder.Decode(candidate.RawSpec, spec); err != nil {
 		return manifest.Manifest{}, errscope.In(specScope, validation.Error{Problems: []error{err}})
 	}
 

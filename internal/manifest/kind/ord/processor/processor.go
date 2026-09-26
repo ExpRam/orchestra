@@ -14,9 +14,7 @@ func NewOrdProcessor() OrdProcessor {
 	return OrdProcessor{}
 }
 
-func (p OrdProcessor) Process(input operation.ProcessInput) error {
-	spec := input.Manifest.Spec.(ord.Spec)
-
+func (p OrdProcessor) Process(input operation.ProcessInput, spec ord.Spec) error {
 	identity := manifest.Type{
 		Kind:       manifest.Kind(input.Manifest.Name),
 		APIVersion: manifest.APIVersion(spec.ApiVersion),
