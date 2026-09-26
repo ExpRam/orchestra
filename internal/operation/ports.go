@@ -39,3 +39,7 @@ type ManifestProcessor[S any] interface {
 type ManifestProcessors interface {
 	Process(op InfrastructureOperation, catalog manifest.Catalog, ws workspace.Workspace) error
 }
+
+type UserProcessors interface {
+	Process(op InfrastructureOperation, unresolvedUser []manifest.UnresolvedManifest, ws workspace.Workspace) error
+}

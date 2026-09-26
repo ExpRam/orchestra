@@ -33,7 +33,8 @@ type callInfrastructureOperationUseCase struct {
 	renderer   ManifestRenderer
 	reader     UnresolvedManifestReader
 	resolver   ManifestResolver
-	processors ManifestProcessors
+	builtin    ManifestProcessors
+	user       UserProcessors
 }
 
 func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, wsSettings WorkspaceSettings) (err error) {
@@ -97,7 +98,7 @@ func (c callInfrastructureOperationUseCase) processBuiltin(op InfrastructureOper
 		return errscope.In(fmt.Sprintf("check %s manifests", workspace.BUILTIN), err)
 	}
 
-	if err := c.processors.Process(op, manifests, ws); err != nil {
+	if err := c.builtin.Process(op, manifests, ws); err != nil {
 		return errscope.In(fmt.Sprintf("process %s manifests", workspace.BUILTIN), err)
 	}
 
@@ -105,6 +106,10 @@ func (c callInfrastructureOperationUseCase) processBuiltin(op InfrastructureOper
 }
 
 func (c callInfrastructureOperationUseCase) processUser(op InfrastructureOperation, ws workspace.Workspace, unresolvedUser []manifest.UnresolvedManifest) error {
+	if err := c.user.Process(op, unresolvedUser, ws); err != nil {
+		return errscope.In(fmt.Sprintf("process %s manifests", workspace.USER), err)
+	}
+
 	return nil
 }
 
@@ -114,7 +119,8 @@ func NewCallInfrastructureOperationUseCase(
 	renderer ManifestRenderer,
 	reader UnresolvedManifestReader,
 	resolver ManifestResolver,
-	processors ManifestProcessors,
+	builtin ManifestProcessors,
+	user    UserProcessors,
 ) CallInfrastructureOperationUseCase {
 	return callInfrastructureOperationUseCase{
 		preparer:   preparer,
@@ -122,6 +128,7 @@ func NewCallInfrastructureOperationUseCase(
 		renderer:   renderer,
 		reader:     reader,
 		resolver:   resolver,
-		processors: processors,
+		builtin:    builtin,
+		user:       user,
 	}
 }
