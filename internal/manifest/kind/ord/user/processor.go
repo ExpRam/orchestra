@@ -34,9 +34,5 @@ func (p *Processor) Process(op operation.InfrastructureOperation, unresolvedUser
 		manifests[utype] = unresolvedManifest
 	}
 
-	for k, v := range manifests {
-		fmt.Println(k, v)
-	}
-
 	return nil
 }
