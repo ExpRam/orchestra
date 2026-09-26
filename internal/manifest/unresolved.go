@@ -62,12 +62,13 @@ func (n Name) String() string {
 	return string(n)
 }
 
+type RawSpec = map[string]any
 type UnresolvedManifest struct {
 	Kind       Kind
 	APIVersion APIVersion
 	Name       Name
 	Metadata   Metadata
-	Spec       Spec
+	RawSpec    RawSpec
 }
 
 func (m UnresolvedManifest) Type() Type {
@@ -81,7 +82,7 @@ func (m UnresolvedManifest) Identity() Identity {
 func NewUnresolvedManifest(
 	kind, apiVersion, name string,
 	metadata Metadata,
-	spec Spec,
+	spec RawSpec,
 ) (UnresolvedManifest, error) {
 	var problems errscope.Problems
 
@@ -107,6 +108,6 @@ func NewUnresolvedManifest(
 		APIVersion: manifestAPIVersion,
 		Name:       manifestName,
 		Metadata:   metadata,
-		Spec:       spec,
+		RawSpec:    spec,
 	}, nil
 }

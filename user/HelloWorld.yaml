@@ -1,0 +1,6 @@
+kind: HelloWorld
+apiVersion: v1
+metadata:
+  name: orchestra
+spec:
+  line: "Hello From Orchestra!"

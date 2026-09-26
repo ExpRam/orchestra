@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/expram/orchestra/internal/manifest"
+	"github.com/expram/orchestra/internal/manifest/kind/ord/user"
 	"github.com/expram/orchestra/internal/manifest/processor"
 	"github.com/spf13/cobra"
 
@@ -13,7 +15,6 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
-	"github.com/expram/orchestra/internal/manifest"
 	"github.com/expram/orchestra/internal/manifest/collector"
 	"github.com/expram/orchestra/internal/manifest/dto"
 	"github.com/expram/orchestra/internal/manifest/kind/ord"
@@ -148,11 +149,14 @@ func newStatic() Static {
 	)
 	operationResolver := resolver.NewResolver(specDecoder, specRegistry)
 
-	processorRegistry := registry.NewRegistry(
-		registry.Register[manifest.Kind, operation.ManifestProcessor](ord.Kind, ordprocessor.NewOrdProcessor()),
+	userProcessorRegistry := registry.NewEmptyRegistry[manifest.Type, manifest.Manifest]()
+
+	builtinProcessorRegistry := registry.NewRegistry(
+		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor(userProcessorRegistry)),
 	)
 
-	operationProcessor := processor.NewProcessor(processorRegistry)
+	builtinsProcessor := processor.NewProcessor(builtinProcessorRegistry)
+	userProcessor := user.NewProcessor(userProcessorRegistry)
 
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
 		operationPreparer,
@@ -160,7 +164,8 @@ func newStatic() Static {
 		operationRenderer,
 		operationReader,
 		operationResolver,
-		operationProcessor,
+		builtinsProcessor,
+		userProcessor,
 	)
 
 	return Static{opUseCase}

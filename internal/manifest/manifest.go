@@ -3,7 +3,6 @@ package manifest
 import "fmt"
 
 type Metadata = map[string]any
-type Spec = map[string]any
 
 type Type struct {
 	Kind       Kind
