@@ -59,16 +59,18 @@ func NewAnnotation(name string, aType string, settings map[string]any, execution
 }
 
 type Spec struct {
+	ApiVersion  string
 	Schema      map[string]any
 	Annotations []Annotation
 }
 
-func NewSpec(schema map[string]any, annotations []Annotation) (Spec, error) {
+func NewSpec(apiVersion string, schema map[string]any, annotations []Annotation) (Spec, error) {
 	if schema == nil {
 		return Spec{}, ErrMissingSchema
 	}
 
 	return Spec{
+		ApiVersion:  apiVersion,
 		Schema:      schema,
 		Annotations: annotations,
 	}, nil

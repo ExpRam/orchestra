@@ -45,22 +45,50 @@ func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, 
 		err = errors.Join(err, ws.Close())
 	}()
 
-	builtinFiles, err := c.collector.Collect(ws, workspace.BUILTIN)
+	unresolvedBuiltin, err := c.unresolved(ws, workspace.BUILTIN)
 	if err != nil {
-		return errscope.In(fmt.Sprintf("collect %s manifest files", workspace.BUILTIN), err)
+		return errscope.In("unresolved builtin", err)
+	}
+	if err := c.processBuiltin(op, ws, unresolvedBuiltin); err != nil {
+		return errscope.In("process builtin", err)
 	}
 
-	renderedFiles, err := c.renderer.Render(ws, builtinFiles, []workspace.Directory{workspace.BUILTIN})
-	if err != nil {
-		return errscope.In(fmt.Sprintf("render %s manifests", workspace.BUILTIN), err)
+	if wsSettings.userDirectory == "" {
+		return nil
 	}
 
-	unresolvedManifests, err := c.reader.Read(ws, renderedFiles)
+	unresolvedUser, err := c.unresolved(ws, workspace.USER)
 	if err != nil {
-		return errscope.In(fmt.Sprintf("read %s manifests", workspace.BUILTIN), err)
+		return errscope.In("unresolved user", err)
 	}
 
-	manifests, err := c.resolver.Resolve(unresolvedManifests)
+	if err := c.processUser(op, ws, unresolvedUser); err != nil {
+		return errscope.In("process user", err)
+	}
+
+	return nil
+}
+
+func (c callInfrastructureOperationUseCase) unresolved(ws workspace.Workspace, directory workspace.Directory) (unresolved []manifest.UnresolvedManifest, err error) {
+	files, err := c.collector.Collect(ws, directory)
+	if err != nil {
+		return nil, errscope.In(fmt.Sprintf("collect %s manifest files", directory), err)
+	}
+
+	renderedFiles, err := c.renderer.Render(ws, files, []workspace.Directory{directory})
+	if err != nil {
+		return nil, errscope.In(fmt.Sprintf("render %s manifests", directory), err)
+	}
+
+	unresolved, err = c.reader.Read(ws, renderedFiles)
+	if err != nil {
+		return nil, errscope.In(fmt.Sprintf("read %s manifests", directory), err)
+	}
+	return
+}
+
+func (c callInfrastructureOperationUseCase) processBuiltin(op InfrastructureOperation, ws workspace.Workspace, unresolvedBuiltin []manifest.UnresolvedManifest) error {
+	manifests, err := c.resolver.Resolve(unresolvedBuiltin)
 	if err != nil {
 		return errscope.In(fmt.Sprintf("resolve %s manifests", workspace.BUILTIN), err)
 	}
@@ -73,6 +101,10 @@ func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, 
 		return errscope.In(fmt.Sprintf("process %s manifests", workspace.BUILTIN), err)
 	}
 
+	return nil
+}
+
+func (c callInfrastructureOperationUseCase) processUser(op InfrastructureOperation, ws workspace.Workspace, unresolvedUser []manifest.UnresolvedManifest) error {
 	return nil
 }
 

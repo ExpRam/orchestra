@@ -22,6 +22,7 @@ type Annotation struct {
 }
 
 type Spec struct {
+	ApiVersion  string         `manifest:"apiVersion"`
 	Schema      map[string]any `manifest:"schema"`
 	Annotations []Annotation   `manifest:"annotations"`
 }
@@ -47,7 +48,11 @@ func (s Spec) Convert() (any, error) {
 		annotations = append(annotations, annotation)
 	}
 
-	spec, err := ord.NewSpec(s.Schema, annotations)
+	if s.ApiVersion == "" {
+		s.ApiVersion = "v1"
+	}
+
+	spec, err := ord.NewSpec(s.ApiVersion, s.Schema, annotations)
 	problems.Add(err)
 
 	if len(problems) > 0 {
