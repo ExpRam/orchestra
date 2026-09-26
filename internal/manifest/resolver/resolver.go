@@ -25,10 +25,10 @@ func RegisterSpec[S any, P interface {
 
 type Resolver struct {
 	decoder SpecDecoder
-	specs   registry.Registry[manifest.Type, SpecFactory]
+	specs   *registry.Registry[manifest.Type, SpecFactory]
 }
 
-func NewResolver(decoder SpecDecoder, specs registry.Registry[manifest.Type, SpecFactory]) Resolver {
+func NewResolver(decoder SpecDecoder, specs *registry.Registry[manifest.Type, SpecFactory]) Resolver {
 	return Resolver{decoder: decoder, specs: specs}
 }
 

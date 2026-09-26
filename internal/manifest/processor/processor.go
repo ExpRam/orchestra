@@ -11,23 +11,19 @@ import (
 )
 
 type Processor struct {
-	processors registry.Registry[manifest.Kind, TypedProcessor]
-}
-
-type TypedProcessor interface {
-	Process(input operation.ProcessInput) error
+	processors *registry.Registry[manifest.Kind, KindProcessor]
 }
 
 // typedProcessor Art of Kludge-Oriented Programming.
 type typedProcessor[S any] struct {
-	processor operation.ManifestProcessor[S]
+	processor ManifestProcessor[S]
 }
 
-func Register[S any](kind manifest.Kind, processor operation.ManifestProcessor[S]) registry.Registration[manifest.Kind, TypedProcessor] {
-	return registry.Register[manifest.Kind, TypedProcessor](kind, typedProcessor[S]{processor: processor})
+func Register[S any](kind manifest.Kind, processor ManifestProcessor[S]) registry.Registration[manifest.Kind, KindProcessor] {
+	return registry.Register[manifest.Kind, KindProcessor](kind, typedProcessor[S]{processor: processor})
 }
 
-func NewProcessor(processors registry.Registry[manifest.Kind, TypedProcessor]) Processor {
+func NewProcessor(processors *registry.Registry[manifest.Kind, KindProcessor]) Processor {
 	return Processor{processors: processors}
 }
 
@@ -47,7 +43,7 @@ func (p Processor) process(op operation.InfrastructureOperation, m manifest.Mani
 		return fmt.Errorf("no processor for kind %q", m.Type.Kind)
 	}
 
-	return processor.Process(operation.ProcessInput{
+	return processor.Process(ProcessInput{
 		Manifest:  m,
 		Operation: op,
 		Catalog:   catalog,
@@ -55,7 +51,7 @@ func (p Processor) process(op operation.InfrastructureOperation, m manifest.Mani
 	})
 }
 
-func (w typedProcessor[S]) Process(input operation.ProcessInput) error {
+func (w typedProcessor[S]) Process(input ProcessInput) error {
 	spec, ok := input.Manifest.Spec.(S)
 	if !ok {
 		var excepted S

@@ -152,11 +152,11 @@ func newStatic() Static {
 	userProcessorRegistry := registry.NewEmptyRegistry[manifest.Type, manifest.Manifest]()
 
 	builtinProcessorRegistry := registry.NewRegistry(
-		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor(&userProcessorRegistry)),
+		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor(userProcessorRegistry)),
 	)
 
 	builtinsProcessor := processor.NewProcessor(builtinProcessorRegistry)
-	userProcessor := user.NewProcessor(&userProcessorRegistry)
+	userProcessor := user.NewProcessor(userProcessorRegistry)
 
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
 		operationPreparer,
