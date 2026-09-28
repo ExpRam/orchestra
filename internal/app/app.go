@@ -15,6 +15,7 @@ import (
 	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
+	"github.com/expram/orchestra/internal/gojsonschema"
 	"github.com/expram/orchestra/internal/manifest/collector"
 	"github.com/expram/orchestra/internal/manifest/dto"
 	"github.com/expram/orchestra/internal/manifest/kind/ord"
@@ -149,14 +150,16 @@ func newStatic() Static {
 	)
 	operationResolver := resolver.NewResolver(specDecoder, specRegistry)
 
-	userProcessorRegistry := registry.NewEmptyRegistry[manifest.Type, manifest.Manifest]()
+	schemaValidator := gojsonschema.NewGojsonschemaSchemaValidator()
+
+	userProcessorRegistry := registry.NewEmptyRegistry[manifest.Type, ord.Spec]()
 
 	builtinProcessorRegistry := registry.NewRegistry(
 		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor(userProcessorRegistry)),
 	)
 
 	builtinsProcessor := processor.NewProcessor(builtinProcessorRegistry)
-	userProcessor := user.NewProcessor(userProcessorRegistry)
+	userProcessor := user.NewProcessor(userProcessorRegistry, schemaValidator)
 
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
 		operationPreparer,
