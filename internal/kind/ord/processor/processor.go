@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/expram/orchestra/internal/errscope"
+	"github.com/expram/orchestra/internal/kind/ord"
 	"github.com/expram/orchestra/internal/manifest"
-	"github.com/expram/orchestra/internal/manifest/kind/ord"
-	"github.com/expram/orchestra/internal/manifest/processor"
-	"github.com/expram/orchestra/internal/manifest/registry"
+	"github.com/expram/orchestra/internal/operation/processor"
+	"github.com/expram/orchestra/internal/registry"
 )
 
 type OrdProcessor struct {

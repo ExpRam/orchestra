@@ -5,8 +5,8 @@ import (
 
 	"github.com/expram/orchestra/internal/errscope"
 	"github.com/expram/orchestra/internal/manifest"
-	"github.com/expram/orchestra/internal/manifest/registry"
 	"github.com/expram/orchestra/internal/operation"
+	"github.com/expram/orchestra/internal/registry"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
