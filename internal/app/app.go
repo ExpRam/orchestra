@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 
+	ordpipeline "github.com/expram/orchestra/internal/kind/ord/pipeline"
 	"github.com/expram/orchestra/internal/manifest"
-	"github.com/expram/orchestra/internal/manifest/kind/ord/user"
-	"github.com/expram/orchestra/internal/manifest/processor"
+	"github.com/expram/orchestra/internal/operation/processor"
 	"github.com/spf13/cobra"
 
 	"github.com/expram/orchestra/internal/cli"
@@ -16,22 +16,22 @@ import (
 	"github.com/expram/orchestra/internal/config/source/env"
 	"github.com/expram/orchestra/internal/config/source/flag"
 	"github.com/expram/orchestra/internal/gojsonschema"
-	"github.com/expram/orchestra/internal/manifest/collector"
+	"github.com/expram/orchestra/internal/kind/ord"
+	ordhandler "github.com/expram/orchestra/internal/kind/ord/handler"
+	ordv1 "github.com/expram/orchestra/internal/kind/ord/v1"
 	"github.com/expram/orchestra/internal/manifest/dto"
-	"github.com/expram/orchestra/internal/manifest/kind/ord"
-	ordprocessor "github.com/expram/orchestra/internal/manifest/kind/ord/processor"
-	ordv1 "github.com/expram/orchestra/internal/manifest/kind/ord/v1"
-	"github.com/expram/orchestra/internal/manifest/reader"
-	"github.com/expram/orchestra/internal/manifest/registry"
-	"github.com/expram/orchestra/internal/manifest/renderer"
-	"github.com/expram/orchestra/internal/manifest/resolver"
 	"github.com/expram/orchestra/internal/manifest/yaml"
 	"github.com/expram/orchestra/internal/mapstructure"
 	"github.com/expram/orchestra/internal/operation"
+	"github.com/expram/orchestra/internal/operation/collector"
+	"github.com/expram/orchestra/internal/operation/preparer"
+	"github.com/expram/orchestra/internal/operation/reader"
+	"github.com/expram/orchestra/internal/operation/renderer"
+	"github.com/expram/orchestra/internal/operation/resolver"
 	"github.com/expram/orchestra/internal/pongo2"
 	"github.com/expram/orchestra/internal/provider"
+	"github.com/expram/orchestra/internal/registry"
 	"github.com/expram/orchestra/internal/workspace/filesystem"
-	"github.com/expram/orchestra/internal/workspace/preparer"
 )
 
 const (
@@ -152,14 +152,14 @@ func newStatic() Static {
 
 	schemaValidator := gojsonschema.NewGojsonschemaSchemaValidator()
 
-	userProcessorRegistry := registry.NewEmptyRegistry[manifest.Type, ord.Spec]()
+	userTypeRegistry := registry.NewEmptyRegistry[manifest.Type, ord.Spec]()
 
-	builtinProcessorRegistry := registry.NewRegistry(
-		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor(userProcessorRegistry)),
+	kindHandlerRegistry := registry.NewRegistry(
+		processor.Register[ord.Spec](ord.Kind, ordhandler.NewOrdHandler(userTypeRegistry)),
 	)
 
-	builtinsProcessor := processor.NewProcessor(builtinProcessorRegistry)
-	userProcessor := user.NewProcessor(userProcessorRegistry, schemaValidator)
+	builtinsProcessor := processor.NewProcessor(kindHandlerRegistry)
+	userProcessor := ordpipeline.NewOrdPipeline(userTypeRegistry, schemaValidator)
 
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
 		operationPreparer,

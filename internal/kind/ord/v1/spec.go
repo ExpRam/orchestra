@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/expram/orchestra/internal/errscope"
+	"github.com/expram/orchestra/internal/kind/ord"
 	"github.com/expram/orchestra/internal/manifest"
-	"github.com/expram/orchestra/internal/manifest/kind/ord"
 )
 
 var Type = manifest.Type{Kind: ord.Kind, APIVersion: "v1"}
