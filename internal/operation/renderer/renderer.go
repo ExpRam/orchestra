@@ -4,12 +4,15 @@ import (
 	"path/filepath"
 
 	"github.com/expram/orchestra/internal/errscope"
+	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
 type Renderer struct {
 	template TemplateRenderer
 }
+
+var _ operation.ManifestRenderer = Renderer{}
 
 func NewRenderer(template TemplateRenderer) Renderer {
 	return Renderer{template: template}
@@ -50,7 +53,7 @@ func (r Renderer) render(ws workspace.Workspace, file string, libraries []worksp
 		return "", errscope.In(file, Error{Problems: []error{err}})
 	}
 
-	target := filepath.Join(workspace.RENDERED, file)
+	target := filepath.Join(workspace.Rendered, file)
 	if err := ws.WriteFile(target, output); err != nil {
 		return "", err
 	}

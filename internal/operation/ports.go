@@ -10,7 +10,7 @@ type WorkspacePreparer interface {
 }
 
 type ManifestFileCollector interface {
-	Collect(ws workspace.Workspace, directory string) ([]string, error)
+	Collect(ws workspace.Workspace, directory workspace.Directory) ([]string, error)
 }
 
 type ManifestRenderer interface {

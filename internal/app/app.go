@@ -5,9 +5,6 @@ import (
 	"log/slog"
 	"os"
 
-	ordpipeline "github.com/expram/orchestra/internal/kind/ord/pipeline"
-	"github.com/expram/orchestra/internal/manifest"
-	"github.com/expram/orchestra/internal/operation/processor"
 	"github.com/spf13/cobra"
 
 	"github.com/expram/orchestra/internal/cli"
@@ -18,13 +15,16 @@ import (
 	"github.com/expram/orchestra/internal/gojsonschema"
 	"github.com/expram/orchestra/internal/kind/ord"
 	ordhandler "github.com/expram/orchestra/internal/kind/ord/handler"
+	ordpipeline "github.com/expram/orchestra/internal/kind/ord/pipeline"
 	ordv1 "github.com/expram/orchestra/internal/kind/ord/v1"
+	"github.com/expram/orchestra/internal/manifest"
 	"github.com/expram/orchestra/internal/manifest/dto"
 	"github.com/expram/orchestra/internal/manifest/yaml"
 	"github.com/expram/orchestra/internal/mapstructure"
 	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/operation/collector"
 	"github.com/expram/orchestra/internal/operation/preparer"
+	"github.com/expram/orchestra/internal/operation/processor"
 	"github.com/expram/orchestra/internal/operation/reader"
 	"github.com/expram/orchestra/internal/operation/renderer"
 	"github.com/expram/orchestra/internal/operation/resolver"
@@ -132,34 +132,34 @@ func newRuntime(cfg provider.Provider[config.Config]) Runtime {
 }
 
 func newStatic() Static {
-	workspaceFactory := filesystem.NewFileSystemWorkspaceFactory()
+	workspaceFactory := filesystem.NewWorkspaceFactory()
 	operationPreparer := preparer.NewPreparer(workspaceFactory)
 
 	operationCollector := collector.NewCollector()
 
-	templateRenderer := pongo2.NewPongo2TemplateRenderer()
+	templateRenderer := pongo2.NewTemplateRenderer()
 	operationRenderer := renderer.NewRenderer(templateRenderer)
 
 	manifestValidator := dto.NewKRMUnresolvedManifestValidator()
-	manifestParser := yaml.NewYamlUnresolvedManifestParser(manifestValidator)
+	manifestParser := yaml.NewUnresolvedManifestParser(manifestValidator)
 	operationReader := reader.NewReader(manifestParser)
 
-	specDecoder := mapstructure.NewMapstructureSpecDecoder(resolver.SpecTag)
+	specDecoder := mapstructure.NewSpecDecoder(resolver.SpecTag)
 	specRegistry := registry.NewRegistry(
 		resolver.RegisterSpec[ordv1.Spec](ordv1.Type),
 	)
 	operationResolver := resolver.NewResolver(specDecoder, specRegistry)
 
-	schemaValidator := gojsonschema.NewGojsonschemaSchemaValidator()
+	schemaValidator := gojsonschema.NewSchemaValidator()
 
-	userTypeRegistry := registry.NewEmptyRegistry[manifest.Type, ord.Spec]()
+	userTypeRegistry := registry.NewRegistry[manifest.Type, ord.Spec]()
 
 	kindHandlerRegistry := registry.NewRegistry(
-		processor.Register[ord.Spec](ord.Kind, ordhandler.NewOrdHandler(userTypeRegistry)),
+		processor.Register[ord.Spec](ord.Kind, ordhandler.NewHandler(userTypeRegistry)),
 	)
 
 	builtinsProcessor := processor.NewProcessor(kindHandlerRegistry)
-	userProcessor := ordpipeline.NewOrdPipeline(userTypeRegistry, schemaValidator)
+	userProcessor := ordpipeline.NewPipeline(userTypeRegistry, schemaValidator)
 
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
 		operationPreparer,

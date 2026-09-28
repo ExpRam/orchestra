@@ -15,14 +15,14 @@ import (
 	"github.com/expram/orchestra/internal/workspace"
 )
 
-type FileSystemWorkspace struct {
+type Workspace struct {
 	root        *os.Root
 	deleteAfter bool
 }
 
-var _ workspace.Workspace = (*FileSystemWorkspace)(nil)
+var _ workspace.Workspace = (*Workspace)(nil)
 
-func NewFileSystemWorkspace(deleteAfter bool) (*FileSystemWorkspace, error) {
+func NewWorkspace(deleteAfter bool) (*Workspace, error) {
 	dir, err := os.MkdirTemp("", "workspace")
 	if err != nil {
 		return nil, errscope.In("create workspace", fserror.Cause(err))
@@ -33,13 +33,13 @@ func NewFileSystemWorkspace(deleteAfter bool) (*FileSystemWorkspace, error) {
 		return nil, errscope.In("create workspace", errors.Join(fserror.Cause(err), fserror.Cause(os.RemoveAll(dir))))
 	}
 
-	return &FileSystemWorkspace{
+	return &Workspace{
 		root:        root,
 		deleteAfter: deleteAfter,
 	}, nil
 }
 
-func (ws *FileSystemWorkspace) Close() error {
+func (ws *Workspace) Close() error {
 	err := fserror.Cause(ws.root.Close())
 	if ws.deleteAfter {
 		err = errors.Join(err, fserror.Cause(os.RemoveAll(ws.root.Name())))
@@ -49,10 +49,11 @@ func (ws *FileSystemWorkspace) Close() error {
 	if err != nil {
 		return errscope.In("close workspace", err)
 	}
+
 	return nil
 }
 
-func (ws *FileSystemWorkspace) Walk(dir string, fn func(path string, size int64) error) error {
+func (ws *Workspace) Walk(dir string, fn func(path string, size int64) error) error {
 	walk := func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return nested(dir, path, err)
@@ -76,22 +77,24 @@ func (ws *FileSystemWorkspace) Walk(dir string, fn func(path string, size int64)
 	return nil
 }
 
-func (ws *FileSystemWorkspace) ReadFile(path string) ([]byte, error) {
+func (ws *Workspace) ReadFile(path string) ([]byte, error) {
 	data, err := ws.root.ReadFile(path)
 	if err != nil {
 		return nil, errscope.In(fmt.Sprintf("read %q", path), fserror.Cause(err))
 	}
+
 	return data, nil
 }
 
-func (ws *FileSystemWorkspace) WriteFile(path string, data []byte) error {
+func (ws *Workspace) WriteFile(path string, data []byte) error {
 	if err := ws.writeFile(path, data); err != nil {
 		return errscope.In(fmt.Sprintf("write %q", path), err)
 	}
+
 	return nil
 }
 
-func (ws *FileSystemWorkspace) writeFile(path string, data []byte) error {
+func (ws *Workspace) writeFile(path string, data []byte) error {
 	path, err := localPath(path)
 	if err != nil {
 		return err
@@ -99,24 +102,27 @@ func (ws *FileSystemWorkspace) writeFile(path string, data []byte) error {
 	if err := ws.Mkdir(filepath.Dir(path)); err != nil {
 		return err
 	}
+
 	return fserror.Cause(ws.root.WriteFile(path, data, 0o644))
 }
 
-func (ws *FileSystemWorkspace) Mkdir(path string) error {
+func (ws *Workspace) Mkdir(path string) error {
 	if err := ws.root.MkdirAll(path, 0o755); err != nil {
 		return errscope.In(fmt.Sprintf("create directory %q", path), fserror.Cause(err))
 	}
+
 	return nil
 }
 
-func (ws *FileSystemWorkspace) Remove(path string) error {
+func (ws *Workspace) Remove(path string) error {
 	if err := ws.remove(path); err != nil {
 		return errscope.In(fmt.Sprintf("remove %q", path), err)
 	}
+
 	return nil
 }
 
-func (ws *FileSystemWorkspace) remove(path string) error {
+func (ws *Workspace) remove(path string) error {
 	path, err := localPath(path)
 	if err != nil {
 		return err
@@ -124,17 +130,19 @@ func (ws *FileSystemWorkspace) remove(path string) error {
 	if path == "." {
 		return errors.New("cannot remove workspace root")
 	}
+
 	return fserror.Cause(ws.root.RemoveAll(path))
 }
 
-func (ws *FileSystemWorkspace) Copy(src, dst string) error {
+func (ws *Workspace) Copy(src, dst string) error {
 	if err := ws.copy(src, dst); err != nil {
 		return errscope.In(fmt.Sprintf("copy %q to %q", src, dst), err)
 	}
+
 	return nil
 }
 
-func (ws *FileSystemWorkspace) copy(src, dst string) error {
+func (ws *Workspace) copy(src, dst string) error {
 	dst, err := localPath(dst)
 	if err != nil {
 		return err
@@ -162,11 +170,12 @@ func (ws *FileSystemWorkspace) copy(src, dst string) error {
 		if err := ws.copyEntry(src, dst, path, entry, walkErr); err != nil {
 			return nested(src, path, err)
 		}
+
 		return nil
 	})
 }
 
-func (ws *FileSystemWorkspace) copyEntry(src, dst, path string, entry fs.DirEntry, walkErr error) error {
+func (ws *Workspace) copyEntry(src, dst, path string, entry fs.DirEntry, walkErr error) error {
 	if walkErr != nil {
 		return walkErr
 	}
@@ -194,7 +203,7 @@ func (ws *FileSystemWorkspace) copyEntry(src, dst, path string, entry fs.DirEntr
 	}
 }
 
-func (ws *FileSystemWorkspace) copyFile(src, dst string, info fs.FileInfo) (err error) {
+func (ws *Workspace) copyFile(src, dst string, info fs.FileInfo) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return fserror.Cause(err)
@@ -221,10 +230,11 @@ func localPath(path string) (string, error) {
 	if !filepath.IsLocal(path) {
 		return "", fmt.Errorf("invalid workspace path: %q", path)
 	}
+
 	return filepath.Clean(path), nil
 }
 
-func (ws *FileSystemWorkspace) rejectSymlinks(path string) error {
+func (ws *Workspace) rejectSymlinks(path string) error {
 	for dir := path; dir != "."; dir = filepath.Dir(dir) {
 		info, err := ws.root.Lstat(dir)
 		if errors.Is(err, fs.ErrNotExist) {
@@ -237,6 +247,7 @@ func (ws *FileSystemWorkspace) rejectSymlinks(path string) error {
 			return fmt.Errorf("symbolic links are not supported: %q", dir)
 		}
 	}
+
 	return nil
 }
 
@@ -245,5 +256,6 @@ func nested(root, path string, err error) error {
 	if path == root {
 		return err
 	}
+
 	return errscope.In(strconv.Quote(path), err)
 }

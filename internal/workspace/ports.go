@@ -1,13 +1,5 @@
 package workspace
 
-type Directory = string
-
-const (
-	BUILTIN  Directory = "builtin"
-	USER     Directory = "user"
-	RENDERED Directory = "rendered"
-)
-
 type Workspace interface {
 	Walk(dir string, fn func(path string, size int64) error) error
 

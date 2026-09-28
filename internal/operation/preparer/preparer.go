@@ -3,12 +3,15 @@ package preparer
 import (
 	"errors"
 
+	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
 type Preparer struct {
 	factory WorkspaceFactory
 }
+
+var _ operation.WorkspacePreparer = Preparer{}
 
 func NewPreparer(factory WorkspaceFactory) Preparer {
 	return Preparer{factory: factory}
@@ -20,12 +23,12 @@ func (p Preparer) Prepare(builtin, user string, keep bool) (workspace.Workspace,
 		return nil, err
 	}
 
-	if err := p.populate(w, workspace.BUILTIN, builtin); err != nil {
+	if err := p.populate(w, workspace.Builtin, builtin); err != nil {
 		return nil, closeAndJoin(w, err)
 	}
 
 	if user != "" {
-		if err := p.populate(w, workspace.USER, user); err != nil {
+		if err := p.populate(w, workspace.User, user); err != nil {
 			return nil, closeAndJoin(w, err)
 		}
 	}
@@ -37,6 +40,7 @@ func (p Preparer) populate(w workspace.Workspace, dir workspace.Directory, src s
 	if err := w.Mkdir(dir); err != nil {
 		return err
 	}
+
 	return w.Copy(src, dir)
 }
 

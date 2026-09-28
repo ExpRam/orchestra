@@ -5,6 +5,7 @@ import (
 
 	"github.com/expram/orchestra/internal/errscope"
 	"github.com/expram/orchestra/internal/manifest"
+	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/registry"
 	"github.com/expram/orchestra/internal/validation"
 )
@@ -27,6 +28,8 @@ type Resolver struct {
 	decoder SpecDecoder
 	specs   *registry.Registry[manifest.Type, SpecFactory]
 }
+
+var _ operation.ManifestResolver = Resolver{}
 
 func NewResolver(decoder SpecDecoder, specs *registry.Registry[manifest.Type, SpecFactory]) Resolver {
 	return Resolver{decoder: decoder, specs: specs}

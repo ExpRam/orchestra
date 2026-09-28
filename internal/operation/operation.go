@@ -1,22 +1,22 @@
 package operation
 
-type OperationMode uint8
+type Mode uint8
 
 const (
-	ModePlan OperationMode = iota
+	ModePlan Mode = iota
 	ModeApply
 )
 
-type OperationType uint8
+type Type uint8
 
 const (
-	TypeProvision OperationType = iota
+	TypeProvision Type = iota
 	TypeDeprovision
 )
 
 type InfrastructureOperation struct {
-	Mode OperationMode
-	Type OperationType
+	Mode Mode
+	Type Type
 }
 
 func (op InfrastructureOperation) IsPlan() bool {

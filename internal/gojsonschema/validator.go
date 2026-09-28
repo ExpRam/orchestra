@@ -5,15 +5,19 @@ import (
 	"encoding/json"
 
 	gojsonschemav1 "github.com/xeipuuv/gojsonschema"
+
+	"github.com/expram/orchestra/internal/kind/ord/pipeline"
 )
 
-type GojsonschemaSchemaValidator struct{}
+type SchemaValidator struct{}
 
-func NewGojsonschemaSchemaValidator() GojsonschemaSchemaValidator {
-	return GojsonschemaSchemaValidator{}
+var _ pipeline.SchemaValidator = SchemaValidator{}
+
+func NewSchemaValidator() SchemaValidator {
+	return SchemaValidator{}
 }
 
-func (v GojsonschemaSchemaValidator) Validate(schema map[string]any, document map[string]any) error {
+func (v SchemaValidator) Validate(schema map[string]any, document map[string]any) error {
 	jsonSchema, err := normalize(schema)
 	if err != nil {
 		return err

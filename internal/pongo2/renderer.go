@@ -3,6 +3,7 @@ package pongo2
 import (
 	pongo2v6 "github.com/flosch/pongo2/v6"
 
+	"github.com/expram/orchestra/internal/operation/renderer"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
@@ -10,15 +11,17 @@ const setName = "orchestra"
 
 var bannedTags = []string{"ssi", "now"}
 
-type Pongo2TemplateRenderer struct{}
+type TemplateRenderer struct{}
 
-func NewPongo2TemplateRenderer() Pongo2TemplateRenderer {
+var _ renderer.TemplateRenderer = TemplateRenderer{}
+
+func NewTemplateRenderer() TemplateRenderer {
 	pongo2v6.SetAutoescape(false)
 
-	return Pongo2TemplateRenderer{}
+	return TemplateRenderer{}
 }
 
-func (r Pongo2TemplateRenderer) Render(ws workspace.Workspace, libraries []workspace.Directory, data []byte) ([]byte, error) {
+func (r TemplateRenderer) Render(ws workspace.Workspace, libraries []workspace.Directory, data []byte) ([]byte, error) {
 	loader := newLoader(ws, libraries)
 
 	set := pongo2v6.NewSet(setName, loader)

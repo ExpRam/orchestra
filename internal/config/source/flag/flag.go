@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/expram/orchestra/internal/config"
+	"github.com/expram/orchestra/internal/config/loader"
 )
 
 func Name(path string) string {
@@ -21,7 +22,7 @@ type Flag struct {
 	flags *pflag.FlagSet
 }
 
-var _ config.Source = Flag{}
+var _ loader.Source = Flag{}
 
 func NewFlag(flags *pflag.FlagSet) Flag {
 	return Flag{flags: flags}

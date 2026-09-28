@@ -1,8 +1,9 @@
 package cli
 
 import (
-	"github.com/expram/orchestra/internal/operation"
 	"github.com/spf13/cobra"
+
+	"github.com/expram/orchestra/internal/operation"
 )
 
 type applyCommand struct {

@@ -3,12 +3,15 @@ package reader
 import (
 	"github.com/expram/orchestra/internal/errscope"
 	"github.com/expram/orchestra/internal/manifest"
+	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
 type Reader struct {
 	parser UnresolvedManifestParser
 }
+
+var _ operation.UnresolvedManifestReader = Reader{}
 
 func NewReader(parser UnresolvedManifestParser) Reader {
 	return Reader{parser: parser}
