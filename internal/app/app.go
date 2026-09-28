@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/expram/orchestra/internal/kind/ord/user"
+	ordpipeline "github.com/expram/orchestra/internal/kind/ord/pipeline"
 	"github.com/expram/orchestra/internal/manifest"
 	"github.com/expram/orchestra/internal/operation/processor"
 	"github.com/spf13/cobra"
@@ -17,7 +17,7 @@ import (
 	"github.com/expram/orchestra/internal/config/source/flag"
 	"github.com/expram/orchestra/internal/gojsonschema"
 	"github.com/expram/orchestra/internal/kind/ord"
-	ordprocessor "github.com/expram/orchestra/internal/kind/ord/processor"
+	ordhandler "github.com/expram/orchestra/internal/kind/ord/handler"
 	ordv1 "github.com/expram/orchestra/internal/kind/ord/v1"
 	"github.com/expram/orchestra/internal/manifest/dto"
 	"github.com/expram/orchestra/internal/manifest/yaml"
@@ -152,14 +152,14 @@ func newStatic() Static {
 
 	schemaValidator := gojsonschema.NewGojsonschemaSchemaValidator()
 
-	userProcessorRegistry := registry.NewEmptyRegistry[manifest.Type, ord.Spec]()
+	userTypeRegistry := registry.NewEmptyRegistry[manifest.Type, ord.Spec]()
 
-	builtinProcessorRegistry := registry.NewRegistry(
-		processor.Register[ord.Spec](ord.Kind, ordprocessor.NewOrdProcessor(userProcessorRegistry)),
+	kindHandlerRegistry := registry.NewRegistry(
+		processor.Register[ord.Spec](ord.Kind, ordhandler.NewOrdHandler(userTypeRegistry)),
 	)
 
-	builtinsProcessor := processor.NewProcessor(builtinProcessorRegistry)
-	userProcessor := user.NewProcessor(userProcessorRegistry, schemaValidator)
+	builtinsProcessor := processor.NewProcessor(kindHandlerRegistry)
+	userProcessor := ordpipeline.NewOrdPipeline(userTypeRegistry, schemaValidator)
 
 	opUseCase := operation.NewCallInfrastructureOperationUseCase(
 		operationPreparer,

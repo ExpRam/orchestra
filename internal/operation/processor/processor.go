@@ -11,20 +11,20 @@ import (
 )
 
 type Processor struct {
-	processors *registry.Registry[manifest.Kind, KindProcessor]
+	handlers *registry.Registry[manifest.Kind, KindHandler]
 }
 
-// typedProcessor Art of Kludge-Oriented Programming.
-type typedProcessor[S any] struct {
-	processor ManifestProcessor[S]
+// typedHandler Art of Kludge-Oriented Programming.
+type typedHandler[S any] struct {
+	handler SpecHandler[S]
 }
 
-func Register[S any](kind manifest.Kind, processor ManifestProcessor[S]) registry.Registration[manifest.Kind, KindProcessor] {
-	return registry.Register[manifest.Kind, KindProcessor](kind, typedProcessor[S]{processor: processor})
+func Register[S any](kind manifest.Kind, handler SpecHandler[S]) registry.Registration[manifest.Kind, KindHandler] {
+	return registry.Register[manifest.Kind, KindHandler](kind, typedHandler[S]{handler: handler})
 }
 
-func NewProcessor(processors *registry.Registry[manifest.Kind, KindProcessor]) Processor {
-	return Processor{processors: processors}
+func NewProcessor(handlers *registry.Registry[manifest.Kind, KindHandler]) Processor {
+	return Processor{handlers: handlers}
 }
 
 func (p Processor) Process(op operation.InfrastructureOperation, catalog manifest.Catalog, ws workspace.Workspace) error {
@@ -38,12 +38,12 @@ func (p Processor) Process(op operation.InfrastructureOperation, catalog manifes
 }
 
 func (p Processor) process(op operation.InfrastructureOperation, m manifest.Manifest, catalog manifest.Catalog, ws workspace.Workspace) error {
-	processor, ok := p.processors.Lookup(m.Type.Kind)
+	handler, ok := p.handlers.Lookup(m.Type.Kind)
 	if !ok {
-		return fmt.Errorf("no processor for kind %q", m.Type.Kind)
+		return fmt.Errorf("no handler for kind %q", m.Type.Kind)
 	}
 
-	return processor.Process(ProcessInput{
+	return handler.Handle(HandleInput{
 		Manifest:  m,
 		Operation: op,
 		Catalog:   catalog,
@@ -51,13 +51,13 @@ func (p Processor) process(op operation.InfrastructureOperation, m manifest.Mani
 	})
 }
 
-func (w typedProcessor[S]) Process(input ProcessInput) error {
+func (w typedHandler[S]) Handle(input HandleInput) error {
 	spec, ok := input.Manifest.Spec.(S)
 	if !ok {
 		var excepted S
 
-		return fmt.Errorf("cannot process spec %T, excepted %T", input.Manifest.Spec, excepted)
+		return fmt.Errorf("cannot handle spec %T, excepted %T", input.Manifest.Spec, excepted)
 	}
 
-	return w.processor.Process(input, spec)
+	return w.handler.Handle(input, spec)
 }

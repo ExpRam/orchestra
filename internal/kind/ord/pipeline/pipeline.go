@@ -1,4 +1,4 @@
-package user
+package pipeline
 
 import (
 	"fmt"
@@ -14,16 +14,16 @@ import (
 
 const specScope = "spec"
 
-type Processor struct {
+type OrdPipeline struct {
 	registry  *registry.Registry[manifest.Type, ord.Spec]
 	validator SchemaValidator
 }
 
-func NewProcessor(registry *registry.Registry[manifest.Type, ord.Spec], validator SchemaValidator) Processor {
-	return Processor{registry: registry, validator: validator}
+func NewOrdPipeline(registry *registry.Registry[manifest.Type, ord.Spec], validator SchemaValidator) OrdPipeline {
+	return OrdPipeline{registry: registry, validator: validator}
 }
 
-func (p Processor) Process(op operation.InfrastructureOperation, unresolvedUser []manifest.UnresolvedManifest, ws workspace.Workspace) error {
+func (p OrdPipeline) Process(op operation.InfrastructureOperation, unresolvedUser []manifest.UnresolvedManifest, ws workspace.Workspace) error {
 	var problems errscope.Problems
 
 	manifests := make(map[manifest.Type]manifest.UnresolvedManifest)
@@ -40,7 +40,7 @@ func (p Processor) Process(op operation.InfrastructureOperation, unresolvedUser 
 	return problems.Err()
 }
 
-func (p Processor) validate(unresolvedManifest manifest.UnresolvedManifest) error {
+func (p OrdPipeline) validate(unresolvedManifest manifest.UnresolvedManifest) error {
 	utype := unresolvedManifest.Type()
 
 	spec, ok := p.registry.Lookup(utype)

@@ -25,10 +25,10 @@ type ManifestResolver interface {
 	Resolve(unresolved []manifest.UnresolvedManifest) (manifest.Catalog, error)
 }
 
-type ManifestProcessors interface {
+type ManifestProcessor interface {
 	Process(op InfrastructureOperation, catalog manifest.Catalog, ws workspace.Workspace) error
 }
 
-type UserProcessors interface {
+type UserManifestProcessor interface {
 	Process(op InfrastructureOperation, unresolvedUser []manifest.UnresolvedManifest, ws workspace.Workspace) error
 }

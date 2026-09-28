@@ -1,4 +1,4 @@
-package processor
+package handler
 
 import (
 	"fmt"
@@ -10,21 +10,21 @@ import (
 	"github.com/expram/orchestra/internal/registry"
 )
 
-type OrdProcessor struct {
+type OrdHandler struct {
 	registry *registry.Registry[manifest.Type, ord.Spec]
 }
 
-func NewOrdProcessor(registry *registry.Registry[manifest.Type, ord.Spec]) OrdProcessor {
-	return OrdProcessor{registry: registry}
+func NewOrdHandler(registry *registry.Registry[manifest.Type, ord.Spec]) OrdHandler {
+	return OrdHandler{registry: registry}
 }
 
-func (p OrdProcessor) Process(input processor.ProcessInput, spec ord.Spec) error {
+func (h OrdHandler) Handle(input processor.HandleInput, spec ord.Spec) error {
 	identity := manifest.Type{
 		Kind:       manifest.Kind(input.Manifest.Name),
 		APIVersion: manifest.APIVersion(spec.ApiVersion),
 	}
 
-	if err := p.registry.Add(registry.Register(identity, spec)); err != nil {
+	if err := h.registry.Add(registry.Register(identity, spec)); err != nil {
 		return manifest.Error{Problems: errscope.Problems{fmt.Errorf(
 			"kind %q in api version %q %w", identity.Kind, identity.APIVersion, err,
 		)}}

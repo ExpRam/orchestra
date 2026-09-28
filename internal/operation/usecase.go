@@ -33,8 +33,8 @@ type callInfrastructureOperationUseCase struct {
 	renderer   ManifestRenderer
 	reader     UnresolvedManifestReader
 	resolver   ManifestResolver
-	builtin    ManifestProcessors
-	user       UserProcessors
+	builtin    ManifestProcessor
+	user       UserManifestProcessor
 }
 
 func (c callInfrastructureOperationUseCase) Process(op InfrastructureOperation, wsSettings WorkspaceSettings) (err error) {
@@ -119,8 +119,8 @@ func NewCallInfrastructureOperationUseCase(
 	renderer ManifestRenderer,
 	reader UnresolvedManifestReader,
 	resolver ManifestResolver,
-	builtin ManifestProcessors,
-	user    UserProcessors,
+	builtin ManifestProcessor,
+	user    UserManifestProcessor,
 ) CallInfrastructureOperationUseCase {
 	return callInfrastructureOperationUseCase{
 		preparer:   preparer,
