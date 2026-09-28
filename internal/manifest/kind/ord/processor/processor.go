@@ -11,10 +11,10 @@ import (
 )
 
 type OrdProcessor struct {
-	registry *registry.Registry[manifest.Type, manifest.Manifest]
+	registry *registry.Registry[manifest.Type, ord.Spec]
 }
 
-func NewOrdProcessor(registry *registry.Registry[manifest.Type, manifest.Manifest]) OrdProcessor {
+func NewOrdProcessor(registry *registry.Registry[manifest.Type, ord.Spec]) OrdProcessor {
 	return OrdProcessor{registry: registry}
 }
 
@@ -24,7 +24,7 @@ func (p OrdProcessor) Process(input processor.ProcessInput, spec ord.Spec) error
 		APIVersion: manifest.APIVersion(spec.ApiVersion),
 	}
 
-	if err := p.registry.Add(registry.Register(identity, input.Manifest)); err != nil {
+	if err := p.registry.Add(registry.Register(identity, spec)); err != nil {
 		return manifest.Error{Problems: errscope.Problems{fmt.Errorf(
 			"kind %q in api version %q %w", identity.Kind, identity.APIVersion, err,
 		)}}
