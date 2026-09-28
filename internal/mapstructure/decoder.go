@@ -2,17 +2,21 @@ package mapstructure
 
 import (
 	mapstructurev2 "github.com/go-viper/mapstructure/v2"
+
+	"github.com/expram/orchestra/internal/operation/resolver"
 )
 
-type MapstructureSpecDecoder struct {
+type SpecDecoder struct {
 	tag string
 }
 
-func NewMapstructureSpecDecoder(tag string) MapstructureSpecDecoder {
-	return MapstructureSpecDecoder{tag: tag}
+var _ resolver.SpecDecoder = SpecDecoder{}
+
+func NewSpecDecoder(tag string) SpecDecoder {
+	return SpecDecoder{tag: tag}
 }
 
-func (d MapstructureSpecDecoder) Decode(tree map[string]any, target any) error {
+func (d SpecDecoder) Decode(tree map[string]any, target any) error {
 	decoder, err := mapstructurev2.NewDecoder(&mapstructurev2.DecoderConfig{
 		TagName:     d.tag,
 		Result:      target,

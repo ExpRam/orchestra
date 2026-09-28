@@ -1,4 +1,4 @@
-package config
+package loader
 
 type Source interface {
 	Name() string

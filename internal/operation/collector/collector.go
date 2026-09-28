@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/expram/orchestra/internal/operation"
 	"github.com/expram/orchestra/internal/workspace"
 )
 
@@ -12,11 +13,13 @@ var manifestExtensions = []string{".yml", ".yaml"}
 
 type Collector struct{}
 
+var _ operation.ManifestFileCollector = Collector{}
+
 func NewCollector() Collector {
 	return Collector{}
 }
 
-func (c Collector) Collect(ws workspace.Workspace, directory string) ([]string, error) {
+func (c Collector) Collect(ws workspace.Workspace, directory workspace.Directory) ([]string, error) {
 	var files []string
 
 	collect := func(file string, size int64) error {

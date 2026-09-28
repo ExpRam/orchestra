@@ -27,11 +27,7 @@ func NewRegistry[K comparable, V any](registrations ...Registration[K, V]) *Regi
 			panic(fmt.Sprintf("%v is registered twice", registration.key))
 		}
 	}
-	return &Registry[K, V]{entries: entries}
-}
 
-func NewEmptyRegistry[K comparable, V any]() *Registry[K, V] {
-	entries := make(map[K]V)
 	return &Registry[K, V]{entries: entries}
 }
 

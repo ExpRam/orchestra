@@ -6,6 +6,7 @@ import (
 	"github.com/expram/orchestra/internal/errscope"
 	"github.com/expram/orchestra/internal/kind/ord"
 	"github.com/expram/orchestra/internal/manifest"
+	"github.com/expram/orchestra/internal/operation/resolver"
 )
 
 var Type = manifest.Type{Kind: ord.Kind, APIVersion: "v1"}
@@ -22,10 +23,12 @@ type Annotation struct {
 }
 
 type Spec struct {
-	ApiVersion  string         `manifest:"apiVersion"`
+	APIVersion  string         `manifest:"apiVersion"`
 	Schema      map[string]any `manifest:"schema"`
 	Annotations []Annotation   `manifest:"annotations"`
 }
+
+var _ resolver.Migration = Spec{}
 
 func (s Spec) Validate() error {
 	return nil
@@ -48,11 +51,11 @@ func (s Spec) Convert() (any, error) {
 		annotations = append(annotations, annotation)
 	}
 
-	if s.ApiVersion == "" {
-		s.ApiVersion = "v1"
+	if s.APIVersion == "" {
+		s.APIVersion = "v1"
 	}
 
-	spec, err := ord.NewSpec(s.ApiVersion, s.Schema, annotations)
+	spec, err := ord.NewSpec(s.APIVersion, s.Schema, annotations)
 	problems.Add(err)
 
 	if len(problems) > 0 {

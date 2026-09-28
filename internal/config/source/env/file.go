@@ -8,6 +8,7 @@ import (
 	"github.com/knadh/koanf/parsers/dotenv"
 
 	"github.com/expram/orchestra/internal/config"
+	"github.com/expram/orchestra/internal/config/loader"
 	"github.com/expram/orchestra/internal/errscope"
 	"github.com/expram/orchestra/internal/errscope/fserror"
 )
@@ -17,7 +18,7 @@ type File struct {
 	file string
 }
 
-var _ config.Source = File{}
+var _ loader.Source = File{}
 
 func NewFile(file, prefix string) File {
 	return File{env{prefix: prefix}, file}

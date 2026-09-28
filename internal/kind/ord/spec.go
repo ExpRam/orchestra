@@ -59,7 +59,7 @@ func NewAnnotation(name string, aType string, settings map[string]any, execution
 }
 
 type Spec struct {
-	ApiVersion  string
+	APIVersion  string
 	Schema      map[string]any
 	Annotations []Annotation
 }
@@ -70,7 +70,7 @@ func NewSpec(apiVersion string, schema map[string]any, annotations []Annotation)
 	}
 
 	return Spec{
-		ApiVersion:  apiVersion,
+		APIVersion:  apiVersion,
 		Schema:      schema,
 		Annotations: annotations,
 	}, nil

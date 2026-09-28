@@ -10,18 +10,20 @@ import (
 	"github.com/expram/orchestra/internal/registry"
 )
 
-type OrdHandler struct {
+type Handler struct {
 	registry *registry.Registry[manifest.Type, ord.Spec]
 }
 
-func NewOrdHandler(registry *registry.Registry[manifest.Type, ord.Spec]) OrdHandler {
-	return OrdHandler{registry: registry}
+var _ processor.SpecHandler[ord.Spec] = Handler{}
+
+func NewHandler(registry *registry.Registry[manifest.Type, ord.Spec]) Handler {
+	return Handler{registry: registry}
 }
 
-func (h OrdHandler) Handle(input processor.HandleInput, spec ord.Spec) error {
+func (h Handler) Handle(input processor.HandleInput, spec ord.Spec) error {
 	identity := manifest.Type{
 		Kind:       manifest.Kind(input.Manifest.Name),
-		APIVersion: manifest.APIVersion(spec.ApiVersion),
+		APIVersion: manifest.APIVersion(spec.APIVersion),
 	}
 
 	if err := h.registry.Add(registry.Register(identity, spec)); err != nil {

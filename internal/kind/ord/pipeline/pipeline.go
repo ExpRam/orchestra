@@ -14,16 +14,18 @@ import (
 
 const specScope = "spec"
 
-type OrdPipeline struct {
+type Pipeline struct {
 	registry  *registry.Registry[manifest.Type, ord.Spec]
 	validator SchemaValidator
 }
 
-func NewOrdPipeline(registry *registry.Registry[manifest.Type, ord.Spec], validator SchemaValidator) OrdPipeline {
-	return OrdPipeline{registry: registry, validator: validator}
+var _ operation.UserManifestProcessor = Pipeline{}
+
+func NewPipeline(registry *registry.Registry[manifest.Type, ord.Spec], validator SchemaValidator) Pipeline {
+	return Pipeline{registry: registry, validator: validator}
 }
 
-func (p OrdPipeline) Process(op operation.InfrastructureOperation, unresolvedUser []manifest.UnresolvedManifest, ws workspace.Workspace) error {
+func (p Pipeline) Process(op operation.InfrastructureOperation, unresolvedUser []manifest.UnresolvedManifest, ws workspace.Workspace) error {
 	var problems errscope.Problems
 
 	manifests := make(map[manifest.Type]manifest.UnresolvedManifest)
@@ -40,7 +42,7 @@ func (p OrdPipeline) Process(op operation.InfrastructureOperation, unresolvedUse
 	return problems.Err()
 }
 
-func (p OrdPipeline) validate(unresolvedManifest manifest.UnresolvedManifest) error {
+func (p Pipeline) validate(unresolvedManifest manifest.UnresolvedManifest) error {
 	utype := unresolvedManifest.Type()
 
 	spec, ok := p.registry.Lookup(utype)

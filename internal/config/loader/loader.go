@@ -11,10 +11,10 @@ import (
 const Tag = "config"
 
 type Loader struct {
-	sources []config.Source
+	sources []Source
 }
 
-func NewLoader(sources ...config.Source) Loader {
+func NewLoader(sources ...Source) Loader {
 	return Loader{sources: sources}
 }
 

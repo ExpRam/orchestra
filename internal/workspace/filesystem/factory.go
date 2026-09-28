@@ -1,15 +1,20 @@
 package filesystem
 
-import "github.com/expram/orchestra/internal/workspace"
+import (
+	"github.com/expram/orchestra/internal/operation/preparer"
+	"github.com/expram/orchestra/internal/workspace"
+)
 
-type FileSystemWorkspaceFactory struct{}
+type WorkspaceFactory struct{}
 
-func NewFileSystemWorkspaceFactory() FileSystemWorkspaceFactory {
-	return FileSystemWorkspaceFactory{}
+var _ preparer.WorkspaceFactory = WorkspaceFactory{}
+
+func NewWorkspaceFactory() WorkspaceFactory {
+	return WorkspaceFactory{}
 }
 
-func (f FileSystemWorkspaceFactory) Create(keep bool) (workspace.Workspace, error) {
-	ws, err := NewFileSystemWorkspace(!keep)
+func (f WorkspaceFactory) Create(keep bool) (workspace.Workspace, error) {
+	ws, err := NewWorkspace(!keep)
 	if err != nil {
 		return nil, err
 	}

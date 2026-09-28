@@ -9,17 +9,17 @@ import (
 	yamldoc "github.com/expram/orchestra/internal/yaml"
 )
 
-type YamlUnresolvedManifestParser struct {
+type UnresolvedManifestParser struct {
 	validator dto.UnresolvedManifestValidator
 }
 
-var _ contract.Parser[manifest.UnresolvedManifest] = YamlUnresolvedManifestParser{}
+var _ contract.Parser[manifest.UnresolvedManifest] = UnresolvedManifestParser{}
 
-func NewYamlUnresolvedManifestParser(validator dto.UnresolvedManifestValidator) YamlUnresolvedManifestParser {
-	return YamlUnresolvedManifestParser{validator: validator}
+func NewUnresolvedManifestParser(validator dto.UnresolvedManifestValidator) UnresolvedManifestParser {
+	return UnresolvedManifestParser{validator: validator}
 }
 
-func (p YamlUnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedManifest, error) {
+func (p UnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedManifest, error) {
 	documents, err := yamldoc.Split(data)
 	if err != nil {
 		return nil, validation.Error{Problems: []error{err}}
@@ -47,7 +47,7 @@ func (p YamlUnresolvedManifestParser) Parse(data []byte) ([]manifest.UnresolvedM
 	return manifests, nil
 }
 
-func (p YamlUnresolvedManifestParser) parse(doc yamldoc.Document) (manifest.UnresolvedManifest, error) {
+func (p UnresolvedManifestParser) parse(doc yamldoc.Document) (manifest.UnresolvedManifest, error) {
 	object, err := doc.Object()
 	if err != nil {
 		return manifest.UnresolvedManifest{}, validation.Error{Problems: []error{err}}

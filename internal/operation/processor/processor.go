@@ -10,14 +10,25 @@ import (
 	"github.com/expram/orchestra/internal/workspace"
 )
 
+type HandleInput struct {
+	Manifest  manifest.Manifest
+	Operation operation.InfrastructureOperation
+	Catalog   manifest.Catalog
+	Workspace workspace.Workspace
+}
+
 type Processor struct {
 	handlers *registry.Registry[manifest.Kind, KindHandler]
 }
+
+var _ operation.ManifestProcessor = Processor{}
 
 // typedHandler Art of Kludge-Oriented Programming.
 type typedHandler[S any] struct {
 	handler SpecHandler[S]
 }
+
+var _ KindHandler = typedHandler[struct{}]{}
 
 func Register[S any](kind manifest.Kind, handler SpecHandler[S]) registry.Registration[manifest.Kind, KindHandler] {
 	return registry.Register[manifest.Kind, KindHandler](kind, typedHandler[S]{handler: handler})
@@ -51,13 +62,13 @@ func (p Processor) process(op operation.InfrastructureOperation, m manifest.Mani
 	})
 }
 
-func (w typedHandler[S]) Handle(input HandleInput) error {
+func (h typedHandler[S]) Handle(input HandleInput) error {
 	spec, ok := input.Manifest.Spec.(S)
 	if !ok {
-		var excepted S
+		var expected S
 
-		return fmt.Errorf("cannot handle spec %T, excepted %T", input.Manifest.Spec, excepted)
+		return fmt.Errorf("cannot handle spec %T, expected %T", input.Manifest.Spec, expected)
 	}
 
-	return w.handler.Handle(input, spec)
+	return h.handler.Handle(input, spec)
 }
